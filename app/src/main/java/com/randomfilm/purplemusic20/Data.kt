@@ -2,14 +2,32 @@ package com.randomfilm.purplemusic20
 
 import android.content.Context
 import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
 import okhttp3.RequestBody
 import retrofit2.Retrofit
+import retrofit2.Response
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
+import java.util.concurrent.TimeUnit
 
 data class Track(val id: Int, val title: String, val artist: String, val cover_url: String, val stream_url: String, val uploader_id: Int, val genre: String? = "Autre", val play_count: Int? = 0)
 data class Playlist(val id: Int, val name: String, val song_ids: String, val creator: String, val creator_id: Int)
 data class SimpleResponse(val status: String, val message: String?, val user_id: Int?, val username: String?, val is_admin: Boolean?)
+
+data class LrcResponse(
+    val trackName: String?,
+    val artistName: String?,
+    val plainLyrics: String?,
+    val syncedLyrics: String?
+)
+
+interface LrcLibApi {
+    @GET("api/get")
+    suspend fun getLyrics(
+        @Query("track_name") trackName: String,
+        @Query("artist_name") artistName: String
+    ): Response<LrcResponse>
+}
 
 interface PurpleApi {
     @GET("api.php?action=list") suspend fun getTracks(): List<Track>
@@ -60,10 +78,15 @@ interface PurpleApi {
     ): SimpleResponse
 }
 
-// ApiClient dynamique : reconstruit Retrofit quand l'URL change
 object ApiClient {
     private var _baseUrl: String = ""
     private var _service: PurpleApi? = null
+
+    // Client HTTP optimisé pour éviter les timeouts par défaut trop longs
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(15, TimeUnit.SECONDS)
+        .build()
 
     val service: PurpleApi
         get() = _service ?: error("ApiClient non initialisé. Appelle ApiClient.init(url) d'abord.")
@@ -74,6 +97,7 @@ object ApiClient {
             _baseUrl = normalized
             _service = Retrofit.Builder()
                 .baseUrl(_baseUrl)
+                .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
                 .create(PurpleApi::class.java)
@@ -82,22 +106,32 @@ object ApiClient {
 
     fun normalizeUrl(url: String): String {
         var u = url.trim()
-        if (!u.endsWith("/")) u += "/"
+        if (u.isNotEmpty() && !u.endsWith("/")) u += "/"
         return u
     }
 
     fun isInitialized() = _service != null
 }
 
-class SessionManager(context: Context) {
-    private val prefs = context.getSharedPreferences("purple", Context.MODE_PRIVATE)
+object LrcApiClient {
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(15, TimeUnit.SECONDS)
+        .build()
+        
+    val service: LrcLibApi by lazy {
+        Retrofit.Builder().baseUrl("https://lrclib.net/").client(client)
+            .addConverterFactory(GsonConverterFactory.create()).build().create(LrcLibApi::class.java)
+    }
+}
 
-    // --- Serveur ---
+class SessionManager(context: Context) {
+    private val prefs = context.applicationContext.getSharedPreferences("purple", Context.MODE_PRIVATE)
+
     fun getServerUrl(): String = prefs.getString("server_url", "") ?: ""
     fun saveServerUrl(url: String) = prefs.edit().putString("server_url", url).apply()
     fun hasServerUrl(): Boolean = getServerUrl().isNotEmpty()
 
-    // --- Utilisateur ---
     fun saveUser(id: Int, n: String, p: String, adm: Boolean) =
         prefs.edit().putInt("id", id).putString("n", n).putString("p", p).putBoolean("adm", adm).apply()
 
@@ -106,7 +140,6 @@ class SessionManager(context: Context) {
     fun getPassword() = prefs.getString("p", "") ?: ""
     fun isAdmin() = prefs.getBoolean("adm", false)
 
-    // Déconnexion : efface les credentials mais conserve le serveur
     fun logout() = prefs.edit().remove("id").remove("n").remove("p").remove("adm").apply()
 
     fun getHiddenGenres(): Set<String> = prefs.getStringSet("hidden_genres", emptySet()) ?: emptySet()
@@ -117,4 +150,10 @@ class SessionManager(context: Context) {
 
     fun saveSortMode(mode: String) = prefs.edit().putString("sort_mode", mode).apply()
     fun getSortMode(): String = prefs.getString("sort_mode", "date_desc") ?: "date_desc"
+
+    fun isCoverCacheEnabled(): Boolean = prefs.getBoolean("cover_cache", true)
+    fun setCoverCacheEnabled(enabled: Boolean) = prefs.edit().putBoolean("cover_cache", enabled).apply()
+
+    fun isDynamicThemeEnabled(): Boolean = prefs.getBoolean("dynamic_theme", false)
+    fun setDynamicThemeEnabled(enabled: Boolean) = prefs.edit().putBoolean("dynamic_theme", enabled).apply()
 }
