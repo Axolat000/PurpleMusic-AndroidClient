@@ -53,8 +53,8 @@ class PurpleWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
             val prefs = currentState<androidx.datastore.preferences.core.Preferences>()
-            val title = prefs[WidgetKeys.title] ?: "Purple Music"
-            val artist = prefs[WidgetKeys.artist] ?: "Prêt à écouter"
+            val title = prefs[WidgetKeys.title] ?: context.getString(R.string.widget_default_title)
+            val artist = prefs[WidgetKeys.artist] ?: context.getString(R.string.player_ready_to_listen)
             val isPlaying = prefs[WidgetKeys.isPlaying] ?: false
             val shuffle = prefs[WidgetKeys.shuffle] ?: false
             val repeat = prefs[WidgetKeys.repeat] ?: Player.REPEAT_MODE_OFF
@@ -81,7 +81,7 @@ class PurpleWidget : GlanceAppWidget() {
                         if (bitmap != null) {
                             Image(
                                 provider = ImageProvider(bitmap),
-                                contentDescription = "Cover",
+                                contentDescription = context.getString(R.string.widget_cover_content_description),
                                 contentScale = ContentScale.Crop,
                                 modifier = GlanceModifier.size(70.dp).cornerRadius(12.dp)
                             )
@@ -127,7 +127,7 @@ class PurpleWidget : GlanceAppWidget() {
                             // SHUFFLE
                             Image(
                                 provider = ImageProvider(R.drawable.ic_shuffle_widget),
-                                contentDescription = "Shuffle",
+                                contentDescription = context.getString(R.string.widget_shuffle_content_description),
                                 colorFilter = ColorFilter.tint(ColorProvider(if(shuffle) Color(0xFFBB86FC) else Color.Gray)),
                                 modifier = GlanceModifier.size(20.dp).clickable(actionRunCallback<ShuffleAction>())
                             )
@@ -137,7 +137,7 @@ class PurpleWidget : GlanceAppWidget() {
                             // PREV
                             Image(
                                 provider = ImageProvider(R.drawable.ic_prev_widget),
-                                contentDescription = "Prev",
+                                contentDescription = context.getString(R.string.widget_prev_content_description),
                                 colorFilter = ColorFilter.tint(ColorProvider(Color.White)),
                                 modifier = GlanceModifier.size(28.dp).clickable(actionRunCallback<PrevAction>())
                             )
@@ -155,7 +155,7 @@ class PurpleWidget : GlanceAppWidget() {
                             ) {
                                 Image(
                                     provider = ImageProvider(if (isPlaying) R.drawable.ic_pause_widget else R.drawable.ic_play_widget),
-                                    contentDescription = "Play/Pause",
+                                    contentDescription = context.getString(R.string.widget_play_pause_content_description),
                                     colorFilter = ColorFilter.tint(ColorProvider(Color(0xFF0F0C1D))), // Icône noire sur fond blanc
                                     modifier = GlanceModifier.size(24.dp)
                                 )
@@ -166,7 +166,7 @@ class PurpleWidget : GlanceAppWidget() {
                             // NEXT
                             Image(
                                 provider = ImageProvider(R.drawable.ic_next_widget),
-                                contentDescription = "Next",
+                                contentDescription = context.getString(R.string.widget_next_content_description),
                                 colorFilter = ColorFilter.tint(ColorProvider(Color.White)),
                                 modifier = GlanceModifier.size(28.dp).clickable(actionRunCallback<NextAction>())
                             )
@@ -178,7 +178,7 @@ class PurpleWidget : GlanceAppWidget() {
                             val repeatColor = if(repeat != Player.REPEAT_MODE_OFF) Color(0xFFBB86FC) else Color.Gray
                             Image(
                                 provider = ImageProvider(repeatIcon),
-                                contentDescription = "Repeat",
+                                contentDescription = context.getString(R.string.widget_repeat_content_description),
                                 colorFilter = ColorFilter.tint(ColorProvider(repeatColor)),
                                 modifier = GlanceModifier.size(20.dp).clickable(actionRunCallback<RepeatAction>())
                             )

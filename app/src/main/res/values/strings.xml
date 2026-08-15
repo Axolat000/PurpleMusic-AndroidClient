@@ -1,3 +1,191 @@
 <resources>
     <string name="app_name">PurpleMusic</string>
+
+    <!-- Brand -->
+    <string name="app_brand_name">PURPLE</string>
+    <string name="app_brand_name_full">PURPLE MUSIC</string>
+
+    <!-- Common actions / labels -->
+    <string name="action_save">Sauver</string>
+    <string name="action_delete">Supprimer</string>
+    <string name="action_edit">Modifier</string>
+    <string name="action_add_to_playlist">Ajouter à un mix</string>
+    <string name="action_download">Télécharger</string>
+    <string name="action_delete_offline">Supprimer hors-ligne</string>
+    <string name="search_placeholder">Rechercher...</string>
+    <string name="track_title_label">Titre</string>
+    <string name="track_artist_label">Artiste</string>
+    <string name="track_genre_label">Genre</string>
+    <string name="track_count">%1$d titre(s)</string>
+    <string name="label_offline">Hors-ligne</string>
+
+    <!-- Sort mode display names -->
+    <string name="sort_popular">Les plus écoutés</string>
+    <string name="sort_recent">Plus récent</string>
+    <string name="sort_oldest">Plus ancien</string>
+    <string name="sort_name_asc">Nom (A-Z)</string>
+    <string name="sort_name_desc">Nom (Z-A)</string>
+    <string name="sort_by_artist">Par Artiste</string>
+
+    <!-- Player / MainApp -->
+    <string name="player_ready_to_listen">Prêt à écouter</string>
+    <string name="player_stopped">Arrêté</string>
+    <string name="player_ready">Prêt</string>
+    <string name="player_loading">Lecture...</string>
+    <string name="player_lyrics_not_found_for_track">Paroles introuvables pour ce titre.</string>
+    <string name="player_lyrics_not_found">Paroles introuvables.</string>
+    <string name="player_lyrics_connection_error">Erreur de connexion (LRCLib).</string>
+    <string name="player_now_playing_header">LECTURE EN COURS</string>
+    <string name="player_lyrics_button">PAROLES</string>
+
+    <!-- Auth -->
+    <string name="auth_server_setup_title">Configuration du serveur</string>
+    <string name="auth_server_url_placeholder">https://exemple.com/music/</string>
+    <string name="auth_enter_address_error">Veuillez entrer une adresse.</string>
+    <string name="auth_server_unreachable_error">Impossible de joindre le serveur.</string>
+    <string name="auth_confirm_button">CONFIRMER</string>
+    <string name="auth_change_server_title">Changer de serveur</string>
+    <string name="auth_server_address_label">Adresse du serveur :</string>
+    <string name="auth_empty_address_error">Adresse vide.</string>
+    <string name="auth_server_updated_toast">Serveur mis à jour ✓</string>
+    <string name="auth_server_unreachable_short">Serveur inaccessible.</string>
+    <string name="auth_dialog_confirm">Confirmer</string>
+    <string name="auth_dialog_cancel">Annuler</string>
+    <string name="auth_change_button">Changer</string>
+    <string name="auth_tab_login">Connexion</string>
+    <string name="auth_tab_register">Inscription</string>
+    <string name="auth_username_label">Utilisateur</string>
+    <string name="auth_password_label">Mot de passe</string>
+    <string name="auth_generic_error">Erreur</string>
+    <string name="auth_login_button">CONNEXION</string>
+    <string name="auth_confirm_password_label">Confirmer</string>
+    <string name="auth_register_button">S\'INSCRIRE</string>
+    <string name="auth_offline_downloads">Musiques téléchargées (Hors-ligne)</string>
+
+    <!-- Home -->
+    <string name="home_settings_content_description">Paramètres</string>
+    <string name="home_logout_content_description">Déconnexion</string>
+    <string name="home_section_recent">Ajouts récents</string>
+    <string name="home_section_playlists">Tes Mixs</string>
+    <string name="home_section_library">Toute la bibliothèque</string>
+
+    <!-- Downloads -->
+    <string name="downloads_screen_title">| Hors-ligne</string>
+
+    <!-- Playlists -->
+    <string name="playlists_screen_title">| Tes Mixs</string>
+    <string name="playlists_create_content_description">Créer</string>
+    <string name="manage_playlist_title">Gérer Playlist</string>
+    <string name="playlist_name_label">Nom</string>
+
+    <!-- Playlist Detail -->
+    <string name="playlist_play_all">TOUT LIRE</string>
+    <string name="playlist_empty">Ce mix est vide</string>
+
+    <!-- Playlist Builder -->
+    <string name="playlist_builder_title">Créer un Mix</string>
+    <string name="playlist_created_with_tracks">Mix créé avec %1$d titres</string>
+    <string name="playlist_name_placeholder">Nom du Mix...</string>
+    <string name="playlist_search_tracks_placeholder">Rechercher des musiques...</string>
+
+    <!-- Select Playlist -->
+    <string name="select_playlist_title">Ajouter à un Mix</string>
+    <string name="select_playlist_new_mix">NOUVEAU MIX</string>
+    <string name="playlist_added_to">Ajouté à %1$s</string>
+
+    <!-- Queue -->
+    <string name="queue_title">File d\'attente</string>
+
+    <!-- Settings dialog -->
+    <string name="settings_dialog_title">Paramètres</string>
+    <string name="settings_tab_general">Général</string>
+    <string name="settings_tab_filters_sort">Filtres &amp; Tri</string>
+    <string name="settings_tab_equalizer">Égaliseur</string>
+    <string name="settings_tab_appearance">Apparence</string>
+    <string name="settings_tab_advanced">Avancé</string>
+    <string name="settings_volume_label">Volume interne :</string>
+    <string name="settings_sleep_timer_label">Minuteur de sommeil :</string>
+    <string name="settings_sleep_timer_disabled">Désactivé</string>
+    <string name="settings_minutes_format">%1$d minutes</string>
+    <string name="settings_dynamic_theme_label">Thème dynamique (Lecteur)</string>
+    <string name="settings_visualizer_label">Visualiseur Audio (Spectre)</string>
+    <string name="settings_visualizer_permission_denied">Permission refusée pour le visualiseur</string>
+    <string name="settings_sort_default_label">Trier par défaut</string>
+    <string name="settings_hide_genres_label">Masquer les genres :</string>
+    <string name="settings_other_genre_placeholder">Autre genre à masquer</string>
+    <string name="settings_add_genre_content_description">Ajouter</string>
+    <string name="settings_eq_enable_label">Activer l\'égaliseur</string>
+    <string name="settings_eq_freq_khz">%1$d kHz</string>
+    <string name="settings_eq_freq_hz">%1$d Hz</string>
+    <string name="settings_eq_level_db">%1$d dB</string>
+    <string name="settings_eq_unavailable">Égaliseur non disponible</string>
+    <string name="settings_theme_colors_label">Thème de couleurs :</string>
+    <string name="settings_material_you_label">Couleurs dynamiques (fond d\'écran)</string>
+    <string name="settings_material_you_requirement">Nécessite Android 12 ou supérieur</string>
+    <string name="settings_cover_cache_label">Mettre en cache les covers</string>
+    <string name="settings_cache_cleared_toast">Cache vidé</string>
+    <string name="settings_clear_cache_button">Vider le cache des covers</string>
+    <string name="settings_redo_tutorial_button">Refaire le Setup</string>
+    <string name="settings_close_button">Fermer</string>
+    <string name="settings_sleep_timer_set">Minuteur défini sur %1$d min</string>
+    <string name="settings_sleep_timer_off">Minuteur désactivé</string>
+    <string name="settings_language_label">Langue</string>
+    <string name="language_system">Suivre le système</string>
+    <string name="language_french">Français</string>
+    <string name="language_english">English</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_german">Deutsch</string>
+
+    <!-- Theme presets -->
+    <string name="theme_preset_violet">Violet</string>
+    <string name="theme_preset_amoled">AMOLED</string>
+    <string name="theme_preset_midnight">Minuit</string>
+    <string name="theme_preset_forest">Forêt</string>
+    <string name="theme_preset_crimson">Cramoisi</string>
+
+    <!-- Tutorial -->
+    <string name="tutorial_welcome_greeting">Bienvenue sur</string>
+    <string name="tutorial_click_to_start">Cliquez pour commencer</string>
+    <string name="tutorial_step_theme_title">Thème Dynamique</string>
+    <string name="tutorial_step_theme_desc">Adapte les couleurs du lecteur en fonction de la pochette de la musique écoutée. (Par défaut: Non)</string>
+    <string name="tutorial_step_theme_switch_label">Activer le thème dynamique</string>
+    <string name="tutorial_step_visualizer_title">Visualiseur Audio</string>
+    <string name="tutorial_step_visualizer_desc">Affiche des barres réagissant à la musique sur l\'écran du lecteur. Nécessite l\'autorisation d\'enregistrer l\'audio (le micro n\'est pas utilisé pour vous écouter).</string>
+    <string name="tutorial_step_visualizer_switch_label">Activer le visualiseur</string>
+    <string name="tutorial_step_sort_title">Filtres &amp; Tri</string>
+    <string name="tutorial_step_sort_desc">Choisissez l\'ordre d\'affichage par défaut de vos musiques dans la bibliothèque.</string>
+    <string name="tutorial_step_eq_title">Égaliseur</string>
+    <string name="tutorial_step_eq_desc">Activez l\'égaliseur audio intégré pour modifier les fréquences et ajuster le son à votre écoute.</string>
+    <string name="tutorial_step_cache_title">Mise en Cache</string>
+    <string name="tutorial_step_cache_desc">Sauvegardez les pochettes des musiques sur votre appareil pour les charger instantanément la prochaine fois et économiser vos données.</string>
+    <string name="tutorial_step_cache_switch_label">Activer le cache des covers</string>
+    <string name="tutorial_nav_back">Retour</string>
+    <string name="tutorial_nav_next">Suivant</string>
+    <string name="tutorial_nav_finish">Terminer</string>
+    <string name="tutorial_audio_mute">Couper le son</string>
+    <string name="tutorial_audio_unmute">Activer le son</string>
+
+    <!-- Upload -->
+    <string name="upload_title">Publier un Titre</string>
+    <string name="upload_audio_selected">✅ Audio OK</string>
+    <string name="upload_choose_mp3">Choisir MP3</string>
+    <string name="upload_cover_selected">✅ Cover OK</string>
+    <string name="upload_choose_cover">Choisir Cover</string>
+    <string name="upload_success_toast">Succès</string>
+    <string name="upload_publish_button">PUBLIER</string>
+
+    <!-- Widget -->
+    <string name="widget_default_title">Purple Music</string>
+    <string name="widget_cover_content_description">Pochette</string>
+    <string name="widget_shuffle_content_description">Aléatoire</string>
+    <string name="widget_prev_content_description">Précédent</string>
+    <string name="widget_play_pause_content_description">Lecture/Pause</string>
+    <string name="widget_next_content_description">Suivant</string>
+    <string name="widget_repeat_content_description">Répéter</string>
+
+    <!-- Bottom nav -->
+    <string name="nav_home_label">Biblio</string>
+    <string name="nav_mixs_label">Mixs</string>
+    <string name="nav_upload_label">Upload</string>
+    <string name="nav_queue_label">File</string>
 </resources>

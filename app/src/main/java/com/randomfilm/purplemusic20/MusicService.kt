@@ -323,8 +323,8 @@ class MusicService : MediaSessionService(), SharedPreferences.OnSharedPreference
         Handler(Looper.getMainLooper()).post {
             if (currentPlayer == null) return@post
 
-            val title = currentPlayer?.currentMediaItem?.mediaMetadata?.title?.toString() ?: "Purple Music"
-            val artist = currentPlayer?.currentMediaItem?.mediaMetadata?.artist?.toString() ?: "Prêt à écouter"
+            val title = currentPlayer?.currentMediaItem?.mediaMetadata?.title?.toString() ?: getString(R.string.widget_default_title)
+            val artist = currentPlayer?.currentMediaItem?.mediaMetadata?.artist?.toString() ?: getString(R.string.player_ready_to_listen)
             val isPlaying = currentPlayer?.isPlaying ?: false
             val shuffle = currentPlayer?.shuffleModeEnabled ?: false
             val repeat = currentPlayer?.repeatMode ?: Player.REPEAT_MODE_OFF
