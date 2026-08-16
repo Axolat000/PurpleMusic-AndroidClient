@@ -4,6 +4,10 @@
     android:initialLayout="@layout/glance_default_loading_layout"
     android:minWidth="140dp"
     android:minHeight="70dp"
+    android:minResizeWidth="140dp"
+    android:minResizeHeight="70dp"
+    android:targetCellWidth="3"
+    android:targetCellHeight="1"
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="0"
     android:widgetCategory="home_screen" />
