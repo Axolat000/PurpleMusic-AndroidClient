@@ -84,6 +84,8 @@ fun MainApp(
 
     var allTracks by remember { mutableStateOf<List<Track>>(emptyList()) }
     var allPlaylists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
+    var recommendedTracks by remember { mutableStateOf<List<Track>>(emptyList()) }
+    var likedTrackIds by remember { mutableStateOf<Set<Int>>(emptySet()) }
 
     var isGlobalQueue by remember { mutableStateOf(true) }
     var currentGlobalQueueIds by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -100,6 +102,45 @@ fun MainApp(
                     allPlaylists = ApiClient.service.getPlaylists()
                 }
             } catch (e: Exception) {
+            }
+        }
+        // action=list ne renvoie pas l'état "liké" (per-utilisateur, endpoint anonyme) ni les
+        // recommandations (nécessitent l'auth) -- fetchées séparément et en parallèle, sans bloquer
+        // l'affichage du reste de l'accueil (elles apparaissent quand elles arrivent, pas de spinner).
+        if (session.hasServerUrl() && session.getUserId() != -1) {
+            CoroutineScope(Dispatchers.Main).launch {
+                try {
+                    likedTrackIds = ApiClient.service.getMyLikes(session.getUsername(), session.getPassword()).liked_ids?.toSet() ?: emptySet()
+                } catch (e: Exception) {
+                }
+            }
+            CoroutineScope(Dispatchers.Main).launch {
+                try {
+                    recommendedTracks = ApiClient.service.getRecommendations(session.getUsername(), session.getPassword())
+                } catch (e: Exception) {
+                }
+            }
+        }
+    }
+
+    fun toggleLike(track: Track) {
+        val wasLiked = likedTrackIds.contains(track.id)
+        // Optimiste : on bascule l'UI tout de suite, on corrige seulement si la réponse serveur
+        // dit le contraire ou si l'appel échoue (même logique que toggleLikeUI côté client web).
+        likedTrackIds = if (wasLiked) likedTrackIds - track.id else likedTrackIds + track.id
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val resp = ApiClient.service.toggleLike(track.id, session.getUsername(), session.getPassword())
+                val serverLiked = resp.liked
+                if (serverLiked != null && serverLiked != !wasLiked) {
+                    withContext(Dispatchers.Main) {
+                        likedTrackIds = if (serverLiked) likedTrackIds + track.id else likedTrackIds - track.id
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    likedTrackIds = if (wasLiked) likedTrackIds + track.id else likedTrackIds - track.id
+                }
             }
         }
     }
@@ -130,18 +171,9 @@ fun MainApp(
                     currentCoverUrl = mediaItem?.mediaMetadata?.artworkUri?.toString() ?: ""
                     trackDuration = mediaController?.duration?.coerceAtLeast(0) ?: 0L
                     currentMediaIndex = mediaController?.currentMediaItemIndex ?: 0
-                    mediaItem?.mediaId?.toIntOrNull()?.let { trackId ->
-                        CoroutineScope(Dispatchers.IO).launch {
-                            try {
-                                ApiClient.service.incrementPlay(
-                                    trackId,
-                                    session.getUsername(),
-                                    session.getPassword()
-                                )
-                            } catch (e: Exception) {
-                            }
-                        }
-                    }
+                    // Le décompte de lecture n'est plus envoyé ici immédiatement : voir la boucle de
+                    // suivi d'écoute (report_listen) ci-dessous, qui ne compte une écoute qu'après 10s
+                    // réels de lecture (remplace l'ancien appel incrementPlay instantané).
                 }
 
                 override fun onIsPlayingChanged(p: Boolean) {
@@ -172,6 +204,50 @@ fun MainApp(
     LaunchedEffect(isPlaying) {
         while (isPlaying) {
             mediaController?.let { currentPosition = it.currentPosition }; delay(500L)
+        }
+    }
+
+    // Suivi d'écoute confirmée (report_listen) : remplace l'ancien incrementPlay instantané.
+    // Approche par tick de 1s qui relit l'état réel de lecture à chaque passage (plutôt que de
+    // bricoler des compteurs pause/resume événementiels) -- même logique que
+    // startListenTracking/stopListenTracking côté client web (app.js), en plus robuste face aux
+    // pauses/reprises et changements de piste. Ne compte les secondes que si isPlaying==true.
+    var listenTrackId by remember { mutableStateOf<Int?>(null) }
+    var listenSeconds by remember { mutableIntStateOf(0) }
+    var listenReported by remember { mutableStateOf(false) }
+
+    fun sendReportListen(trackId: Int, seconds: Int) {
+        if (seconds <= 0) return
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                ApiClient.service.reportListen(trackId, seconds, session.getUsername(), session.getPassword())
+            } catch (e: Exception) {
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(1000L)
+            val currentTid = mediaController?.currentMediaItem?.mediaId?.toIntOrNull()
+            if (currentTid != listenTrackId) {
+                // Le morceau a changé (ou la lecture s'est arrêtée) : si le précédent n'a jamais
+                // atteint le seuil de 10s, on remonte quand même les secondes partielles accumulées
+                // (utile pour les stats de durée d'écoute moyenne même sur un morceau vite skippé --
+                // volontaire, ne pas retirer).
+                if (!listenReported && listenSeconds > 0) {
+                    listenTrackId?.let { sendReportListen(it, listenSeconds) }
+                }
+                listenTrackId = currentTid
+                listenSeconds = 0
+                listenReported = false
+            } else if (currentTid != null && mediaController?.isPlaying == true) {
+                listenSeconds++
+                if (listenSeconds >= 10 && !listenReported) {
+                    listenReported = true
+                    sendReportListen(currentTid, listenSeconds)
+                }
+            }
         }
     }
 
@@ -352,6 +428,8 @@ fun MainApp(
                     HomeScreenImpl(
                         tracks = allTracks,
                         playlists = allPlaylists,
+                        recommendedTracks = recommendedTracks,
+                        likedTrackIds = likedTrackIds,
                         session = session,
                         currentVolume = appVolume,
                         currentSortMode = appSortMode,
@@ -406,6 +484,7 @@ fun MainApp(
                         },
                         onAddToPlaylist = { track -> navController.navigate("select_playlist/${track.id}") },
                         onOpenPlaylist = { playlist -> navController.navigate("playlist_detail/${playlist.id}") },
+                        onToggleLike = { track -> toggleLike(track) },
                         onRedoTutorial = { navController.navigate("tutorial") }
                     )
                 }
@@ -429,9 +508,11 @@ fun MainApp(
                             playlist = playlist,
                             allTracks = allTracks,
                             session = session,
+                            likedTrackIds = likedTrackIds,
                             onBack = { navController.popBackStack() },
                             onPlayFrom = { tracks, startTrack -> playMusic(tracks, startTrack, false) },
                             onAddToPlaylist = { track -> navController.navigate("select_playlist/${track.id}") },
+                            onToggleLike = { track -> toggleLike(track) },
                             onRefresh = reloadData
                         )
                     }

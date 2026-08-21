@@ -33,9 +33,11 @@ fun TrackRowWithMenu(
     track: Track,
     session: SessionManager,
     canEdit: Boolean,
+    isLiked: Boolean,
     onClick: () -> Unit,
     onEdit: () -> Unit,
-    onAddToPlaylist: () -> Unit
+    onAddToPlaylist: () -> Unit,
+    onToggleLike: () -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -95,6 +97,14 @@ fun TrackRowWithMenu(
                     color = LocalAppColors.current.accent
                 )
             }
+        }
+
+        IconButton(onClick = onToggleLike) {
+            Icon(
+                if (isLiked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                contentDescription = stringResource(R.string.action_toggle_like),
+                tint = if (isLiked) LocalAppColors.current.accent else LocalAppColors.current.textSecondary
+            )
         }
 
         Box {

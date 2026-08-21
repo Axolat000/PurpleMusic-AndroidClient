@@ -19,6 +19,35 @@ interface PurpleApi {
         @Field("password") p: String
     ): SimpleResponse
 
+    // Remplace le décompte immédiat de incrementPlay par un signalement confirmé après un vrai temps
+    // d'écoute (seuil de 10s revalidé côté serveur) -- voir la boucle de suivi dans MainApp.kt.
+    @FormUrlEncoded @POST("api.php?action=report_listen")
+    suspend fun reportListen(
+        @Field("track_id") tid: Int,
+        @Field("seconds") seconds: Int,
+        @Field("username") u: String,
+        @Field("password") p: String
+    ): ReportListenResponse
+
+    @FormUrlEncoded @POST("api.php?action=toggle_like")
+    suspend fun toggleLike(
+        @Field("track_id") tid: Int,
+        @Field("username") u: String,
+        @Field("password") p: String
+    ): ToggleLikeResponse
+
+    @FormUrlEncoded @POST("api.php?action=my_likes")
+    suspend fun getMyLikes(
+        @Field("username") u: String,
+        @Field("password") p: String
+    ): MyLikesResponse
+
+    @FormUrlEncoded @POST("api.php?action=recommendations")
+    suspend fun getRecommendations(
+        @Field("username") u: String,
+        @Field("password") p: String
+    ): List<Track>
+
     @FormUrlEncoded @POST("api.php?action=login")
     suspend fun login(@Field("username") u: String, @Field("password") p: String): SimpleResponse
 

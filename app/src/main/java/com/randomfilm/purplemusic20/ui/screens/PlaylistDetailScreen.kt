@@ -37,9 +37,11 @@ fun PlaylistDetailScreen(
     playlist: Playlist,
     allTracks: List<Track>,
     session: SessionManager,
+    likedTrackIds: Set<Int>,
     onBack: () -> Unit,
     onPlayFrom: (List<Track>, Track) -> Unit,
     onAddToPlaylist: (Track) -> Unit,
+    onToggleLike: (Track) -> Unit,
     onRefresh: () -> Unit
 ) {
     var showManage by remember { mutableStateOf(false) }
@@ -109,9 +111,11 @@ fun PlaylistDetailScreen(
                         track = track,
                         session = session,
                         canEdit = session.isAdmin() || track.uploader_id == session.getUserId(),
+                        isLiked = likedTrackIds.contains(track.id),
                         onClick = { onPlayFrom(pTracks, track) },
                         onEdit = { editTrack = track },
-                        onAddToPlaylist = { onAddToPlaylist(track) }
+                        onAddToPlaylist = { onAddToPlaylist(track) },
+                        onToggleLike = { onToggleLike(track) }
                     )
                 }
             }

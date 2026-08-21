@@ -10,6 +10,7 @@
     <string name="action_add_to_playlist">Zu einem Mix hinzufügen</string>
     <string name="action_download">Herunterladen</string>
     <string name="action_delete_offline">Download entfernen</string>
+    <string name="action_toggle_like">Diesen Titel mögen</string>
     <string name="search_placeholder">Suchen...</string>
     <string name="track_title_label">Titel</string>
     <string name="track_artist_label">Künstler</string>
@@ -64,6 +65,7 @@
     <string name="home_settings_content_description">Einstellungen</string>
     <string name="home_logout_content_description">Abmelden</string>
     <string name="home_section_recent">Kürzlich hinzugefügt</string>
+    <string name="home_section_recommended">Für dich empfohlen</string>
     <string name="home_see_all">Alle anzeigen</string>
     <string name="home_section_playlists">Deine Mixes</string>
     <string name="home_section_library">Gesamte Bibliothek</string>

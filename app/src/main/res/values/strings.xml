@@ -12,6 +12,7 @@
     <string name="action_add_to_playlist">Ajouter à un mix</string>
     <string name="action_download">Télécharger</string>
     <string name="action_delete_offline">Supprimer hors-ligne</string>
+    <string name="action_toggle_like">Aimer ce morceau</string>
     <string name="search_placeholder">Rechercher...</string>
     <string name="track_title_label">Titre</string>
     <string name="track_artist_label">Artiste</string>
@@ -66,6 +67,7 @@
     <string name="home_settings_content_description">Paramètres</string>
     <string name="home_logout_content_description">Déconnexion</string>
     <string name="home_section_recent">Ajouts récents</string>
+    <string name="home_section_recommended">Recommandé pour toi</string>
     <string name="home_see_all">Voir tout</string>
     <string name="home_section_playlists">Tes Mixs</string>
     <string name="home_section_library">Toute la bibliothèque</string>

@@ -37,7 +37,7 @@ import com.randomfilm.purplemusic20.util.playlistCoverUrl
 
 // ─── Home Screen ──────────────────────────────────────────────────────────────
 @Composable
-fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, session: SessionManager, currentVolume: Float, currentSortMode: String, currentThemePreset: String, currentMaterialYouEnabled: Boolean, onVolumeChange: (Float) -> Unit, onSortChange: (String) -> Unit, onThemeChange: (String) -> Unit, onMaterialYouChange: (Boolean) -> Unit, onPlay: (Track, List<Track>, Boolean) -> Unit, onListUpdated: (List<Track>) -> Unit, onRefresh: () -> Unit, onLogout: () -> Unit, onAddToPlaylist: (Track) -> Unit, onOpenPlaylist: (Playlist) -> Unit, onRedoTutorial: () -> Unit) {
+fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, recommendedTracks: List<Track>, likedTrackIds: Set<Int>, session: SessionManager, currentVolume: Float, currentSortMode: String, currentThemePreset: String, currentMaterialYouEnabled: Boolean, onVolumeChange: (Float) -> Unit, onSortChange: (String) -> Unit, onThemeChange: (String) -> Unit, onMaterialYouChange: (Boolean) -> Unit, onPlay: (Track, List<Track>, Boolean) -> Unit, onListUpdated: (List<Track>) -> Unit, onRefresh: () -> Unit, onLogout: () -> Unit, onAddToPlaylist: (Track) -> Unit, onOpenPlaylist: (Playlist) -> Unit, onToggleLike: (Track) -> Unit, onRedoTutorial: () -> Unit) {
     var search by remember { mutableStateOf("") }
     var hiddenGenres by remember { mutableStateOf(session.getHiddenGenres()) }
     var showSettings by remember { mutableStateOf(false) }
@@ -114,11 +114,12 @@ fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, session: Sess
         val listState = rememberLazyListState()
         val coroutineScope = rememberCoroutineScope()
         // Index de l'item d'en-tête "Bibliothèque" dans la LazyColumn : dépend du nombre de rangées
-        // conditionnelles affichées au-dessus (Ajouts récents / Les plus écoutés / Mixs), recalculé à
-        // chaque recomposition pour rester juste même si l'une de ces rangées est vide.
+        // conditionnelles affichées au-dessus (Ajouts récents / Les plus écoutés / Recommandé / Mixs),
+        // recalculé à chaque recomposition pour rester juste même si l'une de ces rangées est vide.
         val libraryHeaderIndex = listOfNotNull(
             recentTracks.isNotEmpty(),
             popularTracks.isNotEmpty(),
+            recommendedTracks.isNotEmpty(),
             playlists.isNotEmpty()
         ).count { it }
         fun seeAll(sortMode: String) {
@@ -153,6 +154,22 @@ fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, session: Sess
                         Spacer(Modifier.height(20.dp))
                     }
                 }
+                if (recommendedTracks.isNotEmpty()) {
+                    item {
+                        // Fetchée séparément (contrairement à recentTracks/popularTracks qui sont de simples
+                        // tris locaux de `tracks`) : n'apparaît que lorsque MainApp.kt a reçu la réponse de
+                        // action=recommendations, sans bloquer ni afficher de spinner en attendant.
+                        HomeSectionTitle(stringResource(R.string.home_section_recommended))
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            items(recommendedTracks, key = { "reco_${it.id}" }) { track ->
+                                // isGlobal=false : même raison que recentTracks/popularTracks ci-dessus --
+                                // c'est une file curatée, ne doit pas être resynchronisée par onListUpdated.
+                                TrackCoverCard(track, session) { onPlay(track, recommendedTracks, false) }
+                            }
+                        }
+                        Spacer(Modifier.height(20.dp))
+                    }
+                }
                 if (playlists.isNotEmpty()) {
                     item {
                         HomeSectionTitle(stringResource(R.string.home_section_playlists))
@@ -170,9 +187,11 @@ fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, session: Sess
                 TrackRowWithMenu(
                     track = track, session = session,
                     canEdit = session.isAdmin() || track.uploader_id == session.getUserId(),
+                    isLiked = likedTrackIds.contains(track.id),
                     onClick = { onPlay(track, baseList, true) },
                     onEdit = { editTrack = track },
-                    onAddToPlaylist = { onAddToPlaylist(track) }
+                    onAddToPlaylist = { onAddToPlaylist(track) },
+                    onToggleLike = { onToggleLike(track) }
                 )
             }
         }
