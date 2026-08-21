@@ -414,24 +414,30 @@ class MusicService : MediaSessionService(), SharedPreferences.OnSharedPreference
                 }
 
                 val manager = GlanceAppWidgetManager(context)
-                val glanceIds = manager.getGlanceIds(PurpleWidget::class.java)
+                val updatePrefs: (androidx.datastore.preferences.core.MutablePreferences) -> Unit = { prefs ->
+                    prefs[WidgetKeys.title] = title
+                    prefs[WidgetKeys.artist] = artist
+                    prefs[WidgetKeys.isPlaying] = isPlaying
+                    prefs[WidgetKeys.shuffle] = shuffle
+                    prefs[WidgetKeys.repeat] = repeat
+                    prefs[WidgetKeys.currentPos] = currentPos
+                    prefs[WidgetKeys.duration] = duration
 
-                glanceIds.forEach { glanceId ->
-                    updateAppWidgetState(context, glanceId) { prefs ->
-                        prefs[WidgetKeys.title] = title
-                        prefs[WidgetKeys.artist] = artist
-                        prefs[WidgetKeys.isPlaying] = isPlaying
-                        prefs[WidgetKeys.shuffle] = shuffle
-                        prefs[WidgetKeys.repeat] = repeat
-                        prefs[WidgetKeys.currentPos] = currentPos
-                        prefs[WidgetKeys.duration] = duration
-
-                        // Ne mettre à jour le chemin de l'image que si on en a un nouveau valide
-                        if (coverPath.isNotEmpty()) {
-                            prefs[WidgetKeys.coverPath] = coverPath
-                        }
+                    // Ne mettre à jour le chemin de l'image que si on en a un nouveau valide
+                    if (coverPath.isNotEmpty()) {
+                        prefs[WidgetKeys.coverPath] = coverPath
                     }
+                }
+
+                manager.getGlanceIds(PurpleWidget::class.java).forEach { glanceId ->
+                    updateAppWidgetState(context, glanceId, updatePrefs)
                     PurpleWidget().update(context, glanceId)
+                }
+                // Widget compact (voir PurpleWidgetCompact.kt) : même état partagé (WidgetKeys), mis à jour
+                // en parallèle pour que les deux widgets restent toujours synchronisés avec la lecture réelle.
+                manager.getGlanceIds(PurpleWidgetCompact::class.java).forEach { glanceId ->
+                    updateAppWidgetState(context, glanceId, updatePrefs)
+                    PurpleWidgetCompact().update(context, glanceId)
                 }
             }
         }

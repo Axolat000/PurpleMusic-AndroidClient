@@ -16,14 +16,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.randomfilm.purplemusic20.R
 import com.randomfilm.purplemusic20.data.*
 import com.randomfilm.purplemusic20.ui.theme.*
+import com.randomfilm.purplemusic20.util.buildImageRequest
 import kotlinx.coroutines.launch
 
 // ─── Playlists / Mixs Tab ─────────────────────────────────────────────────────
@@ -45,10 +50,24 @@ fun PlaylistsScreenImpl(playlists: List<Playlist>, allTracks: List<Track>, sessi
                 val canManage = session.isAdmin() || p.creator_id == session.getUserId()
                 Card(colors = CardDefaults.cardColors(containerColor = LocalAppColors.current.panel), modifier = Modifier.height(140.dp).clickable { onOpenPlaylist(p) }) {
                     Box(Modifier.fillMaxSize()) {
-                        Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Rounded.Album, null, tint = LocalAppColors.current.accent, modifier = Modifier.size(40.dp))
-                            Spacer(Modifier.height(10.dp))
-                            Text(p.name, color = Color.White, fontWeight = FontWeight.Bold, maxLines = 1)
+                        // Image réelle (uploadée depuis l'app ou le site web) en fond de carte avec un
+                        // léger voile pour garder le titre lisible, sinon repli sur l'icône générique
+                        // centrée comme avant -- même convention que la carte d'accueil (voir HomeScreen.kt).
+                        if (!p.cover.isNullOrBlank()) {
+                            AsyncImage(
+                                model = buildImageRequest(LocalContext.current, session.getServerUrl() + "covers/" + p.cover, session.isCoverCacheEnabled()),
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.65f)))))
+                            Text(p.name, color = Color.White, fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier.align(Alignment.BottomStart).padding(10.dp))
+                        } else {
+                            Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(Icons.Rounded.Album, null, tint = LocalAppColors.current.accent, modifier = Modifier.size(40.dp))
+                                Spacer(Modifier.height(10.dp))
+                                Text(p.name, color = Color.White, fontWeight = FontWeight.Bold, maxLines = 1)
+                            }
                         }
                         if (canManage) IconButton(onClick = { managePlaylist = p }, modifier = Modifier.align(Alignment.TopEnd)) { Icon(Icons.Rounded.MoreVert, null, tint = LocalAppColors.current.textSecondary) }
                     }

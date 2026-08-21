@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
@@ -24,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import kotlinx.coroutines.launch
 import com.randomfilm.purplemusic20.MusicService
 import com.randomfilm.purplemusic20.R
 import com.randomfilm.purplemusic20.data.*
@@ -108,11 +110,25 @@ fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, session: Sess
         Spacer(Modifier.height(20.dp))
         TextField(value = search, onValueChange = { search = it }, placeholder = { Text(stringResource(R.string.search_placeholder), color = LocalAppColors.current.textSecondary) }, colors = TextFieldDefaults.colors(focusedContainerColor = Color(0xFF241B36), unfocusedContainerColor = Color(0xFF241B36), focusedTextColor = Color.White, unfocusedTextColor = Color.White, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent), shape = RoundedCornerShape(50), modifier = Modifier.fillMaxWidth().height(55.dp), trailingIcon = { Icon(Icons.Rounded.FilterList, null, tint = LocalAppColors.current.accent) })
         Spacer(Modifier.height(20.dp))
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        val listState = rememberLazyListState()
+        val coroutineScope = rememberCoroutineScope()
+        // Index de l'item d'en-tête "Bibliothèque" dans la LazyColumn : dépend du nombre de rangées
+        // conditionnelles affichées au-dessus (Ajouts récents / Les plus écoutés / Mixs), recalculé à
+        // chaque recomposition pour rester juste même si l'une de ces rangées est vide.
+        val libraryHeaderIndex = listOfNotNull(
+            recentTracks.isNotEmpty(),
+            popularTracks.isNotEmpty(),
+            playlists.isNotEmpty()
+        ).count { it }
+        fun seeAll(sortMode: String) {
+            onSortChange(sortMode)
+            coroutineScope.launch { listState.animateScrollToItem(libraryHeaderIndex) }
+        }
+        LazyColumn(state = listState, verticalArrangement = Arrangement.spacedBy(10.dp)) {
             if (search.isBlank()) {
                 if (recentTracks.isNotEmpty()) {
                     item {
-                        HomeSectionTitle(stringResource(R.string.home_section_recent))
+                        HomeSectionTitle(stringResource(R.string.home_section_recent), onSeeAll = { seeAll("date_desc") })
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             items(recentTracks, key = { "recent_${it.id}" }) { track ->
                                 // isGlobal=false : file curatée (pas la bibliothèque triée par défaut), ne
@@ -127,7 +143,7 @@ fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, session: Sess
                 }
                 if (popularTracks.isNotEmpty()) {
                     item {
-                        HomeSectionTitle(stringResource(R.string.sort_popular))
+                        HomeSectionTitle(stringResource(R.string.sort_popular), onSeeAll = { seeAll("popular") })
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             items(popularTracks, key = { "popular_${it.id}" }) { track ->
                                 TrackCoverCard(track, session) { onPlay(track, popularTracks, false) }
@@ -141,7 +157,7 @@ fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, session: Sess
                         HomeSectionTitle(stringResource(R.string.home_section_playlists))
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             items(playlists, key = { "mix_${it.id}" }) { playlist ->
-                                PlaylistCoverCard(playlist) { onOpenPlaylist(playlist) }
+                                PlaylistCoverCard(playlist, session) { onOpenPlaylist(playlist) }
                             }
                         }
                         Spacer(Modifier.height(20.dp))
@@ -163,8 +179,19 @@ fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, session: Sess
 }
 
 @Composable
-private fun HomeSectionTitle(text: String) {
-    Text(text, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 10.dp))
+private fun HomeSectionTitle(text: String, onSeeAll: (() -> Unit)? = null) {
+    Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text(text, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        if (onSeeAll != null) {
+            Text(
+                stringResource(R.string.home_see_all),
+                color = LocalAppColors.current.accent,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.clickable { onSeeAll() }
+            )
+        }
+    }
 }
 
 @Composable
@@ -183,13 +210,26 @@ private fun TrackCoverCard(track: Track, session: SessionManager, onClick: () ->
 }
 
 @Composable
-private fun PlaylistCoverCard(playlist: Playlist, onClick: () -> Unit) {
+private fun PlaylistCoverCard(playlist: Playlist, session: SessionManager, onClick: () -> Unit) {
     Column(Modifier.width(110.dp).clickable { onClick() }) {
         Box(
             Modifier.size(110.dp).clip(RoundedCornerShape(12.dp)).background(LocalAppColors.current.panel),
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Rounded.Album, null, tint = LocalAppColors.current.accent, modifier = Modifier.size(36.dp))
+            // Image réelle si la playlist en a une (uploadée depuis l'app ou le site web -- même champ
+            // "cover" que le contrat api.php), sinon repli sur l'icône générique comme avant. Les covers
+            // de playlist sont servies en fichier statique direct (covers/<nom>), pas via l'action
+            // api.php?action=cover&q=<id> réservée aux pistes -- même convention que le site web.
+            if (!playlist.cover.isNullOrBlank()) {
+                AsyncImage(
+                    model = buildImageRequest(LocalContext.current, session.getServerUrl() + "covers/" + playlist.cover, session.isCoverCacheEnabled()),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(Icons.Rounded.Album, null, tint = LocalAppColors.current.accent, modifier = Modifier.size(36.dp))
+            }
         }
         Spacer(Modifier.height(6.dp))
         Text(playlist.name, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium, maxLines = 1)

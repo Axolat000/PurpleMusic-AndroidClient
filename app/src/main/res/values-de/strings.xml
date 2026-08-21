@@ -64,6 +64,7 @@
     <string name="home_settings_content_description">Einstellungen</string>
     <string name="home_logout_content_description">Abmelden</string>
     <string name="home_section_recent">Kürzlich hinzugefügt</string>
+    <string name="home_see_all">Alle anzeigen</string>
     <string name="home_section_playlists">Deine Mixes</string>
     <string name="home_section_library">Gesamte Bibliothek</string>
 

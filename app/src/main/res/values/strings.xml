@@ -66,6 +66,7 @@
     <string name="home_settings_content_description">Paramètres</string>
     <string name="home_logout_content_description">Déconnexion</string>
     <string name="home_section_recent">Ajouts récents</string>
+    <string name="home_see_all">Voir tout</string>
     <string name="home_section_playlists">Tes Mixs</string>
     <string name="home_section_library">Toute la bibliothèque</string>
 

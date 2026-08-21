@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.*
@@ -15,15 +16,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.randomfilm.purplemusic20.R
 import com.randomfilm.purplemusic20.data.*
 import com.randomfilm.purplemusic20.ui.components.EditTrackDialog
 import com.randomfilm.purplemusic20.ui.components.TrackRowWithMenu
 import com.randomfilm.purplemusic20.ui.theme.LocalAppColors
+import com.randomfilm.purplemusic20.util.buildImageRequest
 
 // ─── Détail d'une Playlist : liste des morceaux, aucune lecture auto à l'ouverture ─
 @Composable
@@ -59,6 +64,15 @@ fun PlaylistDetailScreen(
     Column(Modifier.fillMaxSize().background(LocalAppColors.current.background).padding(16.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, null, tint = Color.White) }
+            if (!playlist.cover.isNullOrBlank()) {
+                AsyncImage(
+                    model = buildImageRequest(LocalContext.current, session.getServerUrl() + "covers/" + playlist.cover, session.isCoverCacheEnabled()),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(44.dp).clip(RoundedCornerShape(10.dp))
+                )
+                Spacer(Modifier.width(10.dp))
+            }
             Text(playlist.name, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier.padding(start = 8.dp).weight(1f))
             if (canManage) IconButton(onClick = { showManage = true }) { Icon(Icons.Rounded.MoreVert, null, tint = LocalAppColors.current.textSecondary) }
         }
