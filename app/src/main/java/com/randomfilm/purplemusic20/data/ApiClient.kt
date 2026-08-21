@@ -52,7 +52,15 @@ interface PurpleApi {
     suspend fun login(@Field("username") u: String, @Field("password") p: String): SimpleResponse
 
     @FormUrlEncoded @POST("api.php?action=register")
-    suspend fun register(@Field("username") u: String, @Field("password") p: String): SimpleResponse
+    suspend fun register(
+        @Field("username") u: String, @Field("password") p: String,
+        @Field("accept_terms") at: String
+    ): SimpleResponse
+
+    // Enregistre l'acceptation des CGU par l'utilisateur connecté (serveurs à jour uniquement,
+    // voir terms_accepted/terms_url dans SimpleResponse de login).
+    @FormUrlEncoded @POST("api.php?action=accept_terms")
+    suspend fun acceptTerms(@Field("username") u: String, @Field("password") p: String): SimpleResponse
 
     @Multipart @POST("api.php?action=upload")
     suspend fun uploadTrack(

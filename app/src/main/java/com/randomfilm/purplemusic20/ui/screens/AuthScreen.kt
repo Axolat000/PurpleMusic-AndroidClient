@@ -1,5 +1,7 @@
 package com.randomfilm.purplemusic20.ui.screens
 
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -58,6 +60,10 @@ fun ServerSetupScreen(session: SessionManager, onConfirm: () -> Unit) {
     }
 }
 
+// État transitoire tenu le temps d'afficher le prompt CGU bloquant entre un login/register réussi
+// et la finalisation de la session (session.saveUser + onSuccess) -- voir TermsAcceptanceDialog.
+private data class PendingTerms(val termsUrl: String, val username: String, val password: String, val userId: Int, val isAdmin: Boolean)
+
 @Composable
 fun LoginScreenImpl(session: SessionManager, onOfflineMode: () -> Unit, onSuccess: () -> Unit) {
     val context = LocalContext.current
@@ -65,6 +71,45 @@ fun LoginScreenImpl(session: SessionManager, onOfflineMode: () -> Unit, onSucces
     var selectedTab by remember { mutableIntStateOf(0) }
     var loginUser by remember { mutableStateOf("") }; var loginPass by remember { mutableStateOf("") }; var loginLoading by remember { mutableStateOf(false) }
     var regUser by remember { mutableStateOf("") }; var regPass by remember { mutableStateOf("") }; var regPass2 by remember { mutableStateOf("") }; var regLoading by remember { mutableStateOf(false) }
+
+    // CGU: rempli quand login/register renvoie terms_url non-null et terms_accepted == false.
+    // Couvre à la fois le login classique et le login qui suit un changement de serveur (ce
+    // dernier ne fait que revalider l'URL, la connexion réelle passe toujours par ce même bouton).
+    var pendingTerms by remember { mutableStateOf<PendingTerms?>(null) }
+    var acceptingTerms by remember { mutableStateOf(false) }
+
+    pendingTerms?.let { pt ->
+        AlertDialog(
+            onDismissRequest = {}, // Acceptation obligatoire pour continuer, pas de fermeture hors-action
+            containerColor = LocalAppColors.current.panel,
+            title = { Text(stringResource(R.string.terms_dialog_title), color = Color.White) },
+            text = {
+                Column {
+                    Text(stringResource(R.string.terms_dialog_message), color = LocalAppColors.current.textSecondary, fontSize = 13.sp)
+                    Spacer(Modifier.height(12.dp))
+                    TextButton(
+                        onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(pt.termsUrl))) },
+                        contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp)
+                    ) { Text(stringResource(R.string.terms_dialog_read_link), color = LocalAppColors.current.accent) }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = !acceptingTerms,
+                    onClick = {
+                        scope.launch {
+                            acceptingTerms = true
+                            try { ApiClient.service.acceptTerms(pt.username, pt.password) } catch (e: Exception) {}
+                            session.saveUser(pt.userId, pt.username, pt.password, pt.isAdmin)
+                            acceptingTerms = false
+                            pendingTerms = null
+                            onSuccess()
+                        }
+                    }
+                ) { if (acceptingTerms) CircularProgressIndicator(color = LocalAppColors.current.accent, modifier = Modifier.size(18.dp)) else Text(stringResource(R.string.terms_dialog_accept), color = LocalAppColors.current.accent) }
+            }
+        )
+    }
 
     // --- RESTAURATION: Changement de serveur ---
     var showServerDialog by remember { mutableStateOf(false) }
@@ -148,7 +193,13 @@ fun LoginScreenImpl(session: SessionManager, onOfflineMode: () -> Unit, onSucces
                         loginLoading = true
                         try {
                             val res = ApiClient.service.login(loginUser, loginPass)
-                            if (res.status == "success") { session.saveUser(res.user_id ?: 0, res.username ?: "", loginPass, res.is_admin == true); onSuccess() }
+                            if (res.status == "success") {
+                                if (res.terms_url != null && res.terms_accepted == false) {
+                                    pendingTerms = PendingTerms(res.terms_url, loginUser, loginPass, res.user_id ?: 0, res.is_admin == true)
+                                } else {
+                                    session.saveUser(res.user_id ?: 0, res.username ?: "", loginPass, res.is_admin == true); onSuccess()
+                                }
+                            }
                             else Toast.makeText(context, res.message ?: context.getString(R.string.auth_generic_error), Toast.LENGTH_SHORT).show()
                         } catch (e: Exception) {}
                         loginLoading = false
@@ -168,8 +219,15 @@ fun LoginScreenImpl(session: SessionManager, onOfflineMode: () -> Unit, onSucces
                         scope.launch {
                             regLoading = true
                             try {
-                                val res = ApiClient.service.register(regUser, regPass)
-                                if (res.status == "success") { session.saveUser(ApiClient.service.login(regUser, regPass).user_id?:0, regUser, regPass, false); onSuccess() }
+                                val res = ApiClient.service.register(regUser, regPass, "1")
+                                if (res.status == "success") {
+                                    val loginRes = ApiClient.service.login(regUser, regPass)
+                                    if (loginRes.terms_url != null && loginRes.terms_accepted == false) {
+                                        pendingTerms = PendingTerms(loginRes.terms_url, regUser, regPass, loginRes.user_id ?: 0, false)
+                                    } else {
+                                        session.saveUser(loginRes.user_id ?: 0, regUser, regPass, false); onSuccess()
+                                    }
+                                }
                             } catch (e: Exception) {}
                             regLoading = false
                         }

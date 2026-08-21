@@ -60,6 +60,10 @@
     <string name="auth_confirm_password_label">Confirmar</string>
     <string name="auth_register_button">REGISTRARSE</string>
     <string name="auth_offline_downloads">Música descargada (Sin conexión)</string>
+    <string name="terms_dialog_title">Condiciones de uso</string>
+    <string name="terms_dialog_message">Este servidor requiere aceptar sus condiciones de uso para continuar.</string>
+    <string name="terms_dialog_read_link">Leer las condiciones</string>
+    <string name="terms_dialog_accept">Acepto</string>
 
     <!-- Home -->
     <string name="home_settings_content_description">Ajustes</string>

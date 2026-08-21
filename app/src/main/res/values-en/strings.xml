@@ -60,6 +60,10 @@
     <string name="auth_confirm_password_label">Confirm</string>
     <string name="auth_register_button">SIGN UP</string>
     <string name="auth_offline_downloads">Downloaded music (Offline)</string>
+    <string name="terms_dialog_title">Terms of Use</string>
+    <string name="terms_dialog_message">This server requires you to accept its Terms of Use to continue.</string>
+    <string name="terms_dialog_read_link">Read the terms</string>
+    <string name="terms_dialog_accept">I accept</string>
 
     <!-- Home -->
     <string name="home_settings_content_description">Settings</string>
