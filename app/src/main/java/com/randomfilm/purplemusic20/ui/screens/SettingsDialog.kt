@@ -44,7 +44,7 @@ import kotlinx.coroutines.withContext
 // ─── Settings Dialog ──────────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsDialog(session: SessionManager, currentHidden: Set<String>, currentVolume: Float, currentSortMode: String, currentThemePreset: String, currentMaterialYouEnabled: Boolean, onSave: (Set<String>, String) -> Unit, onVolumeChange: (Float) -> Unit, onSetSleepTimer: (Int) -> Unit, onRedoTutorial: () -> Unit, onThemeChange: (String) -> Unit, onMaterialYouChange: (Boolean) -> Unit, onDismiss: () -> Unit) {
+fun SettingsDialog(session: SessionManager, currentHidden: Set<String>, currentVolume: Float, currentSortMode: String, currentThemePreset: String, currentMaterialYouEnabled: Boolean, recommendedSortAvailable: Boolean, onSave: (Set<String>, String) -> Unit, onVolumeChange: (Float) -> Unit, onSetSleepTimer: (Int) -> Unit, onRedoTutorial: () -> Unit, onThemeChange: (String) -> Unit, onMaterialYouChange: (Boolean) -> Unit, onDismiss: () -> Unit) {
     val context = LocalContext.current
     var localHidden by remember { mutableStateOf(currentHidden) }
     var localVolume by remember { mutableFloatStateOf(currentVolume) }
@@ -64,14 +64,20 @@ fun SettingsDialog(session: SessionManager, currentHidden: Set<String>, currentV
     }
 
     // --- RESTAURATION: Noms lisibles pour les options de tri ---
-    val sortOptions = mapOf(
-        "popular" to stringResource(R.string.sort_popular),
-        "date_desc" to stringResource(R.string.sort_recent),
-        "date_asc" to stringResource(R.string.sort_oldest),
-        "alpha_asc" to stringResource(R.string.sort_name_asc),
-        "alpha_desc" to stringResource(R.string.sort_name_desc),
-        "artist" to stringResource(R.string.sort_by_artist)
-    )
+    // "recommended" n'est proposé que si le classement complet (action=recommendations&full=1) a bien
+    // été récupéré au chargement (recommendedSortAvailable, voir HomeScreen.kt/MainApp.kt) -- certains
+    // serveurs obsolètes/modifiés peuvent ne pas avoir cette fonctionnalité du tout, auquel cas on ne
+    // veut surtout pas laisser l'utilisateur sélectionner un tri "Recommandé" qui n'aurait aucune
+    // donnée derrière.
+    val sortOptions = buildMap {
+        if (recommendedSortAvailable) put("recommended", stringResource(R.string.sort_recommended))
+        put("popular", stringResource(R.string.sort_popular))
+        put("date_desc", stringResource(R.string.sort_recent))
+        put("date_asc", stringResource(R.string.sort_oldest))
+        put("alpha_asc", stringResource(R.string.sort_name_asc))
+        put("alpha_desc", stringResource(R.string.sort_name_desc))
+        put("artist", stringResource(R.string.sort_by_artist))
+    }
 
     val predefinedGenres = listOf("Phonk/Funk", "Rap", "Pop", "Rock", "Electro", "Hyperpop", "Nightcore", "Qualité inférieure", "Autre")
     val displayGenres = (predefinedGenres + localHidden).distinct()

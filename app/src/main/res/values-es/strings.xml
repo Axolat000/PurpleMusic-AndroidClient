@@ -25,6 +25,7 @@
     <string name="sort_name_asc">Nombre (A-Z)</string>
     <string name="sort_name_desc">Nombre (Z-A)</string>
     <string name="sort_by_artist">Por artista</string>
+    <string name="sort_recommended">Recomendado para ti</string>
 
     <!-- Player / MainApp -->
     <string name="player_ready_to_listen">Listo para escuchar</string>

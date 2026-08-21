@@ -85,6 +85,7 @@ fun MainApp(
     var allTracks by remember { mutableStateOf<List<Track>>(emptyList()) }
     var allPlaylists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
     var recommendedTracks by remember { mutableStateOf<List<Track>>(emptyList()) }
+    var fullRecommendedTracks by remember { mutableStateOf<List<Track>>(emptyList()) }
     var likedTrackIds by remember { mutableStateOf<Set<Int>>(emptySet()) }
 
     var isGlobalQueue by remember { mutableStateOf(true) }
@@ -118,6 +119,26 @@ fun MainApp(
                 try {
                     recommendedTracks = ApiClient.service.getRecommendations(session.getUsername(), session.getPassword())
                 } catch (e: Exception) {
+                }
+            }
+            // Classement complet (full=1) : alimente le mode de tri "recommended" et le "Voir tout" de
+            // la rangée Recommandé pour toi. Certains serveurs obsolètes/modifiés peuvent ne pas avoir
+            // cette fonctionnalité du tout -- en cas d'échec on laisse fullRecommendedTracks vide, ce
+            // qui masque déjà le "Voir tout" (même idiome que les rangées recentTracks/popularTracks/
+            // recommendedTracks : liste vide = pas affiché) et retire "Recommandé" du sélecteur de tri
+            // dans SettingsDialog. Si le tri actif était sur le point d'être "recommended" (défaut d'une
+            // install neuve, voir SessionManager.getSortMode), on rabat sur l'ancien défaut en mémoire
+            // seulement -- jamais persisté via session.saveSortMode -- pour retenter au prochain
+            // lancement de l'appli plutôt que d'afficher un tri "Recommandé" muet ou d'écraser
+            // durablement la préférence utilisateur.
+            CoroutineScope(Dispatchers.Main).launch {
+                try {
+                    fullRecommendedTracks = ApiClient.service.getRecommendationsFull(session.getUsername(), session.getPassword(), "1")
+                } catch (e: Exception) {
+                    fullRecommendedTracks = emptyList()
+                }
+                if (fullRecommendedTracks.isEmpty() && appSortMode == "recommended") {
+                    appSortMode = SessionManager.SORT_MODE_FALLBACK
                 }
             }
         }
@@ -429,6 +450,7 @@ fun MainApp(
                         tracks = allTracks,
                         playlists = allPlaylists,
                         recommendedTracks = recommendedTracks,
+                        fullRecommendedTracks = fullRecommendedTracks,
                         likedTrackIds = likedTrackIds,
                         session = session,
                         currentVolume = appVolume,

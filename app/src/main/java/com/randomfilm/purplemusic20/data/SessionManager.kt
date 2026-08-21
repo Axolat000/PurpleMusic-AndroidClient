@@ -33,7 +33,19 @@ class SessionManager(context: Context) {
     fun getVolume(): Float = prefs.getFloat("app_volume", 1.0f)
 
     fun saveSortMode(mode: String) = prefs.edit().putString("sort_mode", mode).apply()
-    fun getSortMode(): String = prefs.getString("sort_mode", "date_desc") ?: "date_desc"
+    // Défaut "recommended" pour une install neuve / aucun choix explicite (le tri par recommandation
+    // complète devient le tri par défaut, comme côté client web) -- mais ce défaut doit rester
+    // dégradable : si le classement complet (action=recommendations&full=1) échoue au chargement
+    // (serveur trop ancien/modifié sans cette fonctionnalité), MainApp.kt bascule appSortMode en
+    // mémoire sur SORT_MODE_FALLBACK ci-dessous SANS jamais appeler saveSortMode, pour retenter au
+    // prochain lancement plutôt que d'écraser durablement la préférence utilisateur.
+    fun getSortMode(): String = prefs.getString("sort_mode", "recommended") ?: "recommended"
+
+    companion object {
+        // Ancien défaut hardcodé, conservé comme repli de session lorsque "recommended" est
+        // indisponible (voir getSortMode ci-dessus et le repli dans MainApp.kt).
+        const val SORT_MODE_FALLBACK = "date_desc"
+    }
 
     fun isCoverCacheEnabled(): Boolean = prefs.getBoolean("cover_cache", true)
     fun setCoverCacheEnabled(enabled: Boolean) = prefs.edit().putBoolean("cover_cache", enabled).apply()

@@ -37,14 +37,14 @@ import com.randomfilm.purplemusic20.util.playlistCoverUrl
 
 // ─── Home Screen ──────────────────────────────────────────────────────────────
 @Composable
-fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, recommendedTracks: List<Track>, likedTrackIds: Set<Int>, session: SessionManager, currentVolume: Float, currentSortMode: String, currentThemePreset: String, currentMaterialYouEnabled: Boolean, onVolumeChange: (Float) -> Unit, onSortChange: (String) -> Unit, onThemeChange: (String) -> Unit, onMaterialYouChange: (Boolean) -> Unit, onPlay: (Track, List<Track>, Boolean) -> Unit, onListUpdated: (List<Track>) -> Unit, onRefresh: () -> Unit, onLogout: () -> Unit, onAddToPlaylist: (Track) -> Unit, onOpenPlaylist: (Playlist) -> Unit, onToggleLike: (Track) -> Unit, onRedoTutorial: () -> Unit) {
+fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, recommendedTracks: List<Track>, fullRecommendedTracks: List<Track>, likedTrackIds: Set<Int>, session: SessionManager, currentVolume: Float, currentSortMode: String, currentThemePreset: String, currentMaterialYouEnabled: Boolean, onVolumeChange: (Float) -> Unit, onSortChange: (String) -> Unit, onThemeChange: (String) -> Unit, onMaterialYouChange: (Boolean) -> Unit, onPlay: (Track, List<Track>, Boolean) -> Unit, onListUpdated: (List<Track>) -> Unit, onRefresh: () -> Unit, onLogout: () -> Unit, onAddToPlaylist: (Track) -> Unit, onOpenPlaylist: (Playlist) -> Unit, onToggleLike: (Track) -> Unit, onRedoTutorial: () -> Unit) {
     var search by remember { mutableStateOf("") }
     var hiddenGenres by remember { mutableStateOf(session.getHiddenGenres()) }
     var showSettings by remember { mutableStateOf(false) }
     var lastSettingsOpenAt by remember { mutableStateOf(0L) }
     val context = LocalContext.current
 
-    val baseList = remember(tracks, hiddenGenres, currentSortMode) {
+    val baseList = remember(tracks, hiddenGenres, currentSortMode, fullRecommendedTracks) {
         tracks.filter { !hiddenGenres.contains(it.genre ?: "Autre") }.let { list ->
             when (currentSortMode) {
                 "popular" -> list.sortedWith(compareByDescending<Track> { it.play_count ?: 0 }.thenByDescending { it.id })
@@ -53,6 +53,17 @@ fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, recommendedTr
                 "alpha_asc" -> list.sortedBy { it.title.lowercase() }
                 "alpha_desc" -> list.sortedByDescending { it.title.lowercase() }
                 "artist" -> list.sortedBy { it.artist.lowercase() }
+                "recommended" -> {
+                    // Contrairement aux autres modes, le classement ne peut pas être recalculé
+                    // localement -- il vient de action=recommendations&full=1 (fullRecommendedTracks,
+                    // fetché une fois par MainApp.kt.reloadData). Si cette liste est vide (course avant
+                    // la fin du fetch, ou serveur sans la fonctionnalité), on dégrade en douceur en
+                    // conservant l'ordre existant plutôt que de planter ou de renvoyer une liste vide --
+                    // MainApp.kt s'assure normalement que ce mode n'est pas actif dans ce cas (repli sur
+                    // SORT_MODE_FALLBACK), ce filet est une sécurité supplémentaire.
+                    val rank = fullRecommendedTracks.withIndex().associate { (idx, t) -> t.id to idx }
+                    list.sortedBy { rank[it.id] ?: Int.MAX_VALUE }
+                }
                 else -> list.sortedByDescending { it.id }
             }
         }
@@ -67,7 +78,7 @@ fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, recommendedTr
     var editTrack by remember { mutableStateOf<Track?>(null) }
 
     if (showSettings) {
-        SettingsDialog(session, hiddenGenres, currentVolume, currentSortMode, currentThemePreset, currentMaterialYouEnabled,
+        SettingsDialog(session, hiddenGenres, currentVolume, currentSortMode, currentThemePreset, currentMaterialYouEnabled, fullRecommendedTracks.isNotEmpty(),
             onSave = { newHidden, newSort -> hiddenGenres = newHidden; session.saveHiddenGenres(newHidden); onSortChange(newSort) },
             onVolumeChange = onVolumeChange,
             onThemeChange = onThemeChange,
@@ -159,7 +170,11 @@ fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, recommendedTr
                         // Fetchée séparément (contrairement à recentTracks/popularTracks qui sont de simples
                         // tris locaux de `tracks`) : n'apparaît que lorsque MainApp.kt a reçu la réponse de
                         // action=recommendations, sans bloquer ni afficher de spinner en attendant.
-                        HomeSectionTitle(stringResource(R.string.home_section_recommended))
+                        // "Voir tout" n'est proposé que si le classement complet (full=1) a bien été
+                        // récupéré -- s'il a échoué (serveur sans la fonctionnalité), fullRecommendedTracks
+                        // reste vide et on masque le bouton plutôt que de basculer vers un tri "Recommandé"
+                        // sans données (voir aussi le repli de mode de tri dans MainApp.kt).
+                        HomeSectionTitle(stringResource(R.string.home_section_recommended), onSeeAll = if (fullRecommendedTracks.isNotEmpty()) { { seeAll("recommended") } } else null)
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             items(recommendedTracks, key = { "reco_${it.id}" }) { track ->
                                 // isGlobal=false : même raison que recentTracks/popularTracks ci-dessus --

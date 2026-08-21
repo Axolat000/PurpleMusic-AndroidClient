@@ -48,6 +48,19 @@ interface PurpleApi {
         @Field("password") p: String
     ): List<Track>
 
+    // Classement complet (full=1) : renvoie l'intégralité de la bibliothèque triée par score de
+    // recommandation, contrairement à getRecommendations ci-dessus qui ne renvoie que le top 20.
+    // Alimente le mode de tri "Recommandé" et le "Voir tout" de la rangée Recommandé pour toi côté
+    // accueil -- fonction séparée plutôt qu'un paramètre par défaut sur getRecommendations, car les
+    // valeurs par défaut sur les méthodes d'interface Retrofit/Kotlin posent problème (méthode de pont
+    // synthétique que Retrofit tente de traiter comme un endpoint).
+    @FormUrlEncoded @POST("api.php?action=recommendations")
+    suspend fun getRecommendationsFull(
+        @Field("username") u: String,
+        @Field("password") p: String,
+        @Field("full") full: String
+    ): List<Track>
+
     @FormUrlEncoded @POST("api.php?action=login")
     suspend fun login(@Field("username") u: String, @Field("password") p: String): SimpleResponse
 
