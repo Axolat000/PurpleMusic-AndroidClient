@@ -1,13 +1,18 @@
 package com.randomfilm.purplemusic20
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.audiofx.Equalizer
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.media3.common.Player
@@ -40,8 +45,23 @@ class MusicService : MediaSessionService(), SharedPreferences.OnSharedPreference
     private var sleepTimerJob: Job? = null
     private var preFadeVolume: Float? = null
 
+    companion object {
+        private const val NOTIFICATION_CHANNEL_ID = "purple_music_playback"
+        private const val NOTIFICATION_ID = 1
+    }
+
     override fun onCreate() {
         super.onCreate()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                NOTIFICATION_CHANNEL_ID,
+                getString(R.string.app_name),
+                NotificationManager.IMPORTANCE_LOW
+            )
+            (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(channel)
+        }
+
         localPlayer = ExoPlayer.Builder(this).build()
         currentPlayer = localPlayer
 
@@ -190,37 +210,69 @@ class MusicService : MediaSessionService(), SharedPreferences.OnSharedPreference
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Widget/BroadcastReceiver -> startForegroundService() alors que le process vient d'être créé à
+        // froid (app totalement fermée) : le système exige que le service passe réellement au premier
+        // plan (startForeground) en quelques secondes, sinon il le tue. La promotion "automatique" de
+        // MediaSessionService est réactive (liée aux changements d'état du lecteur/notification) — dans ce
+        // cas précis (aucun média chargé -> restauration -> play(), plus le when() ci-dessous qui était
+        // jusqu'ici posté sur un Handler donc retardé d'un tick), elle pouvait arriver trop tard. On
+        // appelle donc startForeground() nous-mêmes, immédiatement et de façon synchrone, avec une
+        // notification minimale : MediaSessionService la remplacera par la vraie (titre/pochette/actions)
+        // dès que le lecteur aura un média (même NOTIFICATION_ID), sans discontinuité visible.
+        if (intent?.action != null) {
+            val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_play_widget)
+                .setContentTitle(getString(R.string.app_name))
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setOngoing(true)
+                .build()
+            try {
+                ServiceCompat.startForeground(
+                    this,
+                    NOTIFICATION_ID,
+                    notification,
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                        android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+                    else 0
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
         // Restaurer l'état si le service vient de démarrer et que le lecteur est vide
         if (currentPlayer?.mediaItemCount == 0) {
             restorePlayerState()
         }
 
+        // Exécuté de façon synchrone (plus de Handler.post ici) : on est déjà sur le thread principal
+        // (tous les callbacks de Service le sont), le post ne faisait que retarder inutilement play() d'un
+        // tick, repoussant d'autant la promotion "réactive" de MediaSessionService qu'on vient de
+        // court-circuiter ci-dessus avec l'appel explicite.
         if (intent?.action != null) {
-            Handler(Looper.getMainLooper()).post {
-                when (intent.action) {
-                    "PLAY_PAUSE" -> {
-                        if (currentPlayer?.isPlaying == true) currentPlayer?.pause() else currentPlayer?.play()
-                    }
-                    "NEXT" -> currentPlayer?.seekToNext()
-                    "PREV" -> currentPlayer?.seekToPrevious()
-                    "SHUFFLE" -> currentPlayer?.shuffleModeEnabled = !(currentPlayer?.shuffleModeEnabled ?: false)
-                    "REPEAT" -> {
-                        val next = when (currentPlayer?.repeatMode) {
-                            Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
-                            Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
-                            else -> Player.REPEAT_MODE_OFF
-                        }
-                        currentPlayer?.repeatMode = next
-                    }
-                    "SLEEP_TIMER" -> {
-                        val minutes = intent.getIntExtra("minutes", 0)
-                        startSleepTimer(minutes)
-                    }
+            when (intent.action) {
+                "PLAY_PAUSE" -> {
+                    if (currentPlayer?.isPlaying == true) currentPlayer?.pause() else currentPlayer?.play()
                 }
-                savePlayerState()
-                // Petite sécurité pour l'UI
-                Handler(Looper.getMainLooper()).postDelayed({ updateWidget(false) }, 100)
+                "NEXT" -> currentPlayer?.seekToNext()
+                "PREV" -> currentPlayer?.seekToPrevious()
+                "SHUFFLE" -> currentPlayer?.shuffleModeEnabled = !(currentPlayer?.shuffleModeEnabled ?: false)
+                "REPEAT" -> {
+                    val next = when (currentPlayer?.repeatMode) {
+                        Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                        Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                        else -> Player.REPEAT_MODE_OFF
+                    }
+                    currentPlayer?.repeatMode = next
+                }
+                "SLEEP_TIMER" -> {
+                    val minutes = intent.getIntExtra("minutes", 0)
+                    startSleepTimer(minutes)
+                }
             }
+            savePlayerState()
+            // Petite sécurité pour l'UI
+            Handler(Looper.getMainLooper()).postDelayed({ updateWidget(false) }, 100)
         }
         return super.onStartCommand(intent, flags, startId)
     }

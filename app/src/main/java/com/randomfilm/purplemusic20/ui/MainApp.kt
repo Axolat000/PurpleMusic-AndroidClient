@@ -363,7 +363,7 @@ fun MainApp(
                             appVolume = vol; mediaController?.volume = vol; session.saveVolume(vol)
                         },
                         onSortChange = { mode -> appSortMode = mode; session.saveSortMode(mode) },
-                        onPlay = { t, currentList -> playMusic(currentList, t, true) },
+                        onPlay = { t, currentList, isGlobal -> playMusic(currentList, t, isGlobal) },
                         onListUpdated = { newList ->
                             val newIds = newList.map { it.id.toString() }
                             if (isGlobalQueue && currentGlobalQueueIds.isNotEmpty() && newIds != currentGlobalQueueIds) {

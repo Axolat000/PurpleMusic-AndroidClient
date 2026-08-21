@@ -34,10 +34,11 @@ import com.randomfilm.purplemusic20.util.buildImageRequest
 
 // ─── Home Screen ──────────────────────────────────────────────────────────────
 @Composable
-fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, session: SessionManager, currentVolume: Float, currentSortMode: String, currentThemePreset: String, currentMaterialYouEnabled: Boolean, onVolumeChange: (Float) -> Unit, onSortChange: (String) -> Unit, onThemeChange: (String) -> Unit, onMaterialYouChange: (Boolean) -> Unit, onPlay: (Track, List<Track>) -> Unit, onListUpdated: (List<Track>) -> Unit, onRefresh: () -> Unit, onLogout: () -> Unit, onAddToPlaylist: (Track) -> Unit, onOpenPlaylist: (Playlist) -> Unit, onRedoTutorial: () -> Unit) {
+fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, session: SessionManager, currentVolume: Float, currentSortMode: String, currentThemePreset: String, currentMaterialYouEnabled: Boolean, onVolumeChange: (Float) -> Unit, onSortChange: (String) -> Unit, onThemeChange: (String) -> Unit, onMaterialYouChange: (Boolean) -> Unit, onPlay: (Track, List<Track>, Boolean) -> Unit, onListUpdated: (List<Track>) -> Unit, onRefresh: () -> Unit, onLogout: () -> Unit, onAddToPlaylist: (Track) -> Unit, onOpenPlaylist: (Playlist) -> Unit, onRedoTutorial: () -> Unit) {
     var search by remember { mutableStateOf("") }
     var hiddenGenres by remember { mutableStateOf(session.getHiddenGenres()) }
     var showSettings by remember { mutableStateOf(false) }
+    var lastSettingsOpenAt by remember { mutableStateOf(0L) }
     val context = LocalContext.current
 
     val baseList = remember(tracks, hiddenGenres, currentSortMode) {
@@ -88,7 +89,19 @@ fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, session: Sess
     Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
         Spacer(Modifier.height(16.dp))
         Box(Modifier.fillMaxWidth()) {
-            IconButton(onClick = { showSettings = true }, modifier = Modifier.align(Alignment.CenterStart)) { Icon(Icons.Rounded.Settings, stringResource(R.string.home_settings_content_description), tint = LocalAppColors.current.textSecondary) }
+            IconButton(onClick = {
+                // Anti-spam : signalé en prod, taper 2x très vite sur ce bouton juste après avoir quitté le
+                // grand lecteur pouvait vider complètement la bibliothèque affichée (le 2e tap arrivant
+                // pendant que la transition de retour/l'apparition de la modale sont encore en cours,
+                // atterrissant potentiellement sur un élément de la modale qui vient d'apparaître au même
+                // endroit à l'écran). On ignore simplement toute réouverture dans les 600ms suivant la
+                // précédente plutôt que de rouvrir/recomposer la modale sur un état encore instable.
+                val now = System.currentTimeMillis()
+                if (now - lastSettingsOpenAt > 600) {
+                    lastSettingsOpenAt = now
+                    showSettings = true
+                }
+            }, modifier = Modifier.align(Alignment.CenterStart)) { Icon(Icons.Rounded.Settings, stringResource(R.string.home_settings_content_description), tint = LocalAppColors.current.textSecondary) }
             Text(stringResource(R.string.app_brand_name), color = LocalAppColors.current.accent, fontSize = 20.sp, fontWeight = FontWeight.Black, modifier = Modifier.align(Alignment.Center))
             IconButton(onClick = onLogout, modifier = Modifier.align(Alignment.CenterEnd)) { Icon(Icons.Rounded.ExitToApp, stringResource(R.string.home_logout_content_description), tint = LocalAppColors.current.textSecondary) }
         }
@@ -102,7 +115,11 @@ fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, session: Sess
                         HomeSectionTitle(stringResource(R.string.home_section_recent))
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             items(recentTracks, key = { "recent_${it.id}" }) { track ->
-                                TrackCoverCard(track, session) { onPlay(track, recentTracks) }
+                                // isGlobal=false : file curatée (pas la bibliothèque triée par défaut), ne
+                                // doit jamais être resynchronisée par onListUpdated (voir MainApp.kt) --
+                                // sinon revenir sur Accueil après le grand lecteur remplaçait la file en
+                                // cours par la liste triée par défaut (bug signalé).
+                                TrackCoverCard(track, session) { onPlay(track, recentTracks, false) }
                             }
                         }
                         Spacer(Modifier.height(20.dp))
@@ -113,7 +130,7 @@ fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, session: Sess
                         HomeSectionTitle(stringResource(R.string.sort_popular))
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             items(popularTracks, key = { "popular_${it.id}" }) { track ->
-                                TrackCoverCard(track, session) { onPlay(track, popularTracks) }
+                                TrackCoverCard(track, session) { onPlay(track, popularTracks, false) }
                             }
                         }
                         Spacer(Modifier.height(20.dp))
@@ -136,7 +153,7 @@ fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, session: Sess
                 TrackRowWithMenu(
                     track = track, session = session,
                     canEdit = session.isAdmin() || track.uploader_id == session.getUserId(),
-                    onClick = { onPlay(track, baseList) },
+                    onClick = { onPlay(track, baseList, true) },
                     onEdit = { editTrack = track },
                     onAddToPlaylist = { onAddToPlaylist(track) }
                 )
