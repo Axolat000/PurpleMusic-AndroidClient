@@ -29,6 +29,7 @@ import com.randomfilm.purplemusic20.ui.components.EditTrackDialog
 import com.randomfilm.purplemusic20.ui.components.TrackRowWithMenu
 import com.randomfilm.purplemusic20.ui.theme.LocalAppColors
 import com.randomfilm.purplemusic20.util.buildImageRequest
+import com.randomfilm.purplemusic20.util.playlistCoverUrl
 
 // ─── Détail d'une Playlist : liste des morceaux, aucune lecture auto à l'ouverture ─
 @Composable
@@ -66,7 +67,7 @@ fun PlaylistDetailScreen(
             IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, null, tint = Color.White) }
             if (!playlist.cover.isNullOrBlank()) {
                 AsyncImage(
-                    model = buildImageRequest(LocalContext.current, session.getServerUrl() + "covers/" + playlist.cover, session.isCoverCacheEnabled()),
+                    model = buildImageRequest(LocalContext.current, playlistCoverUrl(session, playlist.cover), session.isCoverCacheEnabled()),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.size(44.dp).clip(RoundedCornerShape(10.dp))

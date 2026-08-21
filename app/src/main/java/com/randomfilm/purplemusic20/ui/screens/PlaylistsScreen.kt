@@ -29,6 +29,7 @@ import com.randomfilm.purplemusic20.R
 import com.randomfilm.purplemusic20.data.*
 import com.randomfilm.purplemusic20.ui.theme.*
 import com.randomfilm.purplemusic20.util.buildImageRequest
+import com.randomfilm.purplemusic20.util.playlistCoverUrl
 import kotlinx.coroutines.launch
 
 // ─── Playlists / Mixs Tab ─────────────────────────────────────────────────────
@@ -55,7 +56,7 @@ fun PlaylistsScreenImpl(playlists: List<Playlist>, allTracks: List<Track>, sessi
                         // centrée comme avant -- même convention que la carte d'accueil (voir HomeScreen.kt).
                         if (!p.cover.isNullOrBlank()) {
                             AsyncImage(
-                                model = buildImageRequest(LocalContext.current, session.getServerUrl() + "covers/" + p.cover, session.isCoverCacheEnabled()),
+                                model = buildImageRequest(LocalContext.current, playlistCoverUrl(session, p.cover), session.isCoverCacheEnabled()),
                                 contentDescription = null,
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop

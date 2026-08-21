@@ -33,6 +33,7 @@ import com.randomfilm.purplemusic20.ui.components.EditTrackDialog
 import com.randomfilm.purplemusic20.ui.components.TrackRowWithMenu
 import com.randomfilm.purplemusic20.ui.theme.*
 import com.randomfilm.purplemusic20.util.buildImageRequest
+import com.randomfilm.purplemusic20.util.playlistCoverUrl
 
 // ─── Home Screen ──────────────────────────────────────────────────────────────
 @Composable
@@ -222,7 +223,7 @@ private fun PlaylistCoverCard(playlist: Playlist, session: SessionManager, onCli
             // api.php?action=cover&q=<id> réservée aux pistes -- même convention que le site web.
             if (!playlist.cover.isNullOrBlank()) {
                 AsyncImage(
-                    model = buildImageRequest(LocalContext.current, session.getServerUrl() + "covers/" + playlist.cover, session.isCoverCacheEnabled()),
+                    model = buildImageRequest(LocalContext.current, playlistCoverUrl(session, playlist.cover), session.isCoverCacheEnabled()),
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
