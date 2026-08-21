@@ -1,7 +1,9 @@
 package com.randomfilm.purplemusic20.ui.screens
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -406,6 +408,13 @@ fun SettingsDialog(session: SessionManager, currentHidden: Set<String>, currentV
                                 Button(onClick = { context.imageLoader.diskCache?.clear(); context.imageLoader.memoryCache?.clear(); Toast.makeText(context, context.getString(R.string.settings_cache_cleared_toast), Toast.LENGTH_SHORT).show() }, colors = ButtonDefaults.buttonColors(containerColor = LocalAppColors.current.background), modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.settings_clear_cache_button), color = LocalAppColors.current.accent) }
                                 Spacer(Modifier.height(10.dp))
                                 Button(onClick = onRedoTutorial, colors = ButtonDefaults.buttonColors(containerColor = LocalAppColors.current.background), modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.settings_redo_tutorial_button), color = LocalAppColors.current.accent) }
+                                // Visible seulement si le serveur connecté a les CGU (voir SessionManager.saveTermsUrl,
+                                // rafraîchi à chaque login) -- absent d'un serveur qui n'a pas la fonctionnalité ou ne
+                                // l'a pas activée, exactement comme le lien équivalent dans les Paramètres du site web.
+                                session.getTermsUrl()?.let { termsUrl ->
+                                    Spacer(Modifier.height(10.dp))
+                                    Button(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(termsUrl))) }, colors = ButtonDefaults.buttonColors(containerColor = LocalAppColors.current.background), modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.settings_view_terms_button), color = LocalAppColors.current.accent) }
+                                }
                             }
                         }
                     }

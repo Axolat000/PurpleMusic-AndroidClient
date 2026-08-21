@@ -131,6 +131,7 @@
     <string name="settings_cache_cleared_toast">Cache cleared</string>
     <string name="settings_clear_cache_button">Clear cover cache</string>
     <string name="settings_redo_tutorial_button">Redo Setup</string>
+    <string name="settings_view_terms_button">View Terms of Use</string>
     <string name="settings_close_button">Close</string>
     <string name="settings_sleep_timer_set">Timer set to %1$d min</string>
     <string name="settings_sleep_timer_off">Timer off</string>

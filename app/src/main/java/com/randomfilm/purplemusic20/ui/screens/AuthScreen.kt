@@ -194,6 +194,11 @@ fun LoginScreenImpl(session: SessionManager, onOfflineMode: () -> Unit, onSucces
                         try {
                             val res = ApiClient.service.login(loginUser, loginPass)
                             if (res.status == "success") {
+                                // Rafraîchi à chaque login réussi (pas seulement à l'inscription), y compris
+                                // après un changement de serveur -- SettingsDialog lit cette valeur pour
+                                // savoir si le bouton "Voir les CGU" doit apparaître. null efface toute
+                                // valeur d'un serveur précédent qui aurait eu la fonctionnalité.
+                                session.saveTermsUrl(res.terms_url)
                                 if (res.terms_url != null && res.terms_accepted == false) {
                                     pendingTerms = PendingTerms(res.terms_url, loginUser, loginPass, res.user_id ?: 0, res.is_admin == true)
                                 } else {
@@ -222,6 +227,7 @@ fun LoginScreenImpl(session: SessionManager, onOfflineMode: () -> Unit, onSucces
                                 val res = ApiClient.service.register(regUser, regPass, "1")
                                 if (res.status == "success") {
                                     val loginRes = ApiClient.service.login(regUser, regPass)
+                                    session.saveTermsUrl(loginRes.terms_url)
                                     if (loginRes.terms_url != null && loginRes.terms_accepted == false) {
                                         pendingTerms = PendingTerms(loginRes.terms_url, regUser, regPass, loginRes.user_id ?: 0, false)
                                     } else {

@@ -19,6 +19,13 @@ class SessionManager(context: Context) {
 
     fun logout() = prefs.edit().remove("id").remove("n").remove("p").remove("adm").apply()
 
+    // URL des CGU du serveur actuellement connecté (voir action=login/api/auth.php côté serveur) --
+    // null si ce serveur n'a pas la fonctionnalité ou ne l'a pas activée. Rafraîchi à chaque login
+    // réussi (pas seulement à l'inscription) pour rester à jour après un changement de serveur, et lu
+    // par SettingsDialog pour afficher (ou non) le bouton "Voir les CGU".
+    fun saveTermsUrl(url: String?) = prefs.edit().putString("terms_url", url).apply()
+    fun getTermsUrl(): String? = prefs.getString("terms_url", null)
+
     fun getHiddenGenres(): Set<String> = prefs.getStringSet("hidden_genres", emptySet()) ?: emptySet()
     fun saveHiddenGenres(genres: Set<String>) = prefs.edit().putStringSet("hidden_genres", genres).apply()
 
