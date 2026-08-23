@@ -1,6 +1,6 @@
 package com.randomfilm.purplemusic20.data
 
-data class Track(val id: Int, val title: String, val artist: String, val cover_url: String, val stream_url: String, val uploader_id: Int, val genre: String? = "Autre", val play_count: Int? = 0, val like_count: Int? = 0)
+data class Track(val id: Int, val title: String, val artist: String, val cover_url: String, val stream_url: String, val uploader_id: Int, val genre: String? = "Autre", val play_count: Int? = 0, val like_count: Int? = 0, val album: String? = null)
 data class Playlist(val id: Int, val name: String, val song_ids: String, val creator: String, val creator_id: Int, val cover: String? = null)
 // terms_accepted / terms_url ne sont renvoyés que par les serveurs à jour supportant les CGU
 // (action=login) -- absents (null) sur un ancien serveur, à traiter comme "pas de CGU à afficher".

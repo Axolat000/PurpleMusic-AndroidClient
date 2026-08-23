@@ -35,6 +35,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 fun EditTrackDialog(track: Track, session: SessionManager, onDismiss: () -> Unit, onSuccess: () -> Unit) {
     var title by remember { mutableStateOf(track.title) }
     var artist by remember { mutableStateOf(track.artist) }
+    var album by remember { mutableStateOf(track.album ?: "") }
     var genre by remember { mutableStateOf(track.genre ?: "Autre") }
     var newCoverUri by remember { mutableStateOf<Uri?>(null) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { newCoverUri = it }
@@ -53,6 +54,7 @@ fun EditTrackDialog(track: Track, session: SessionManager, onDismiss: () -> Unit
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(stringResource(R.string.track_title_label)) }, colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White))
                 OutlinedTextField(value = artist, onValueChange = { artist = it }, label = { Text(stringResource(R.string.track_artist_label)) }, colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White))
+                OutlinedTextField(value = album, onValueChange = { album = it }, label = { Text(stringResource(R.string.track_album_label)) }, colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White))
                 OutlinedTextField(value = genre, onValueChange = { genre = it }, label = { Text(stringResource(R.string.track_genre_label)) }, colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White))
             }
         },
@@ -65,12 +67,13 @@ fun EditTrackDialog(track: Track, session: SessionManager, onDismiss: () -> Unit
                     val t = title.toRequestBody("text/plain".toMediaTypeOrNull())
                     val a = artist.toRequestBody("text/plain".toMediaTypeOrNull())
                     val g = genre.toRequestBody("text/plain".toMediaTypeOrNull())
+                    val al = album.toRequestBody("text/plain".toMediaTypeOrNull())
                     var cp: MultipartBody.Part? = null
                     if (newCoverUri != null) {
                         val f = uriToFile(newCoverUri!!, context)
                         cp = MultipartBody.Part.createFormData("new_cover", f.name, f.asRequestBody("image/*".toMediaTypeOrNull()))
                     }
-                    try { ApiClient.service.editTrack(tid, u, p, t, a, g, cp); onSuccess() } catch (e: Exception) {}
+                    try { ApiClient.service.editTrack(tid, u, p, t, a, g, al, cp); onSuccess() } catch (e: Exception) {}
                 }
             }) { Text(stringResource(R.string.action_save), color = LocalAppColors.current.accent) }
         },

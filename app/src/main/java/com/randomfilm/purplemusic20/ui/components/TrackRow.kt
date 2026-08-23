@@ -37,7 +37,8 @@ fun TrackRowWithMenu(
     onClick: () -> Unit,
     onEdit: () -> Unit,
     onAddToPlaylist: () -> Unit,
-    onToggleLike: () -> Unit
+    onToggleLike: () -> Unit,
+    onArtistClick: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -78,7 +79,11 @@ fun TrackRowWithMenu(
                     maxLines = 1,
                     // fill=false permet de coller au genre tant que c'est court
                     // weight(1f) permet au marquee de s'activer si le texte dépasse
+                    // Navigue vers la page du premier artiste du champ (voir ArtistUtils.splitArtistNames) --
+                    // simplification pour cette rangée compacte, la page Album affiche elle chaque artiste
+                    // séparément quand plusieurs figurent sur le même morceau.
                     modifier = Modifier.weight(1f, fill = false).basicMarquee()
+                        .clickable { ArtistUtils.splitArtistNames(track.artist).firstOrNull()?.let(onArtistClick) }
                 )
 
                 Text(

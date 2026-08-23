@@ -33,6 +33,7 @@ fun UploadScreenImpl(session: SessionManager, onUploadSuccess: () -> Unit) {
     val scope = rememberCoroutineScope()
     var title by remember { mutableStateOf("") }
     var artist by remember { mutableStateOf("") }
+    var album by remember { mutableStateOf("") }
     var genre by remember { mutableStateOf("Autre") }
     var genreExpanded by remember { mutableStateOf(false) }
     var audioUri by remember { mutableStateOf<Uri?>(null) }
@@ -48,6 +49,8 @@ fun UploadScreenImpl(session: SessionManager, onUploadSuccess: () -> Unit) {
         OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text(stringResource(R.string.track_title_label)) }, modifier = Modifier.fillMaxWidth(), colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White))
         Spacer(Modifier.height(10.dp))
         OutlinedTextField(value = artist, onValueChange = { artist = it }, label = { Text(stringResource(R.string.track_artist_label)) }, modifier = Modifier.fillMaxWidth(), colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White))
+        Spacer(Modifier.height(10.dp))
+        OutlinedTextField(value = album, onValueChange = { album = it }, label = { Text(stringResource(R.string.track_album_label)) }, modifier = Modifier.fillMaxWidth(), colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White))
         Spacer(Modifier.height(10.dp))
         ExposedDropdownMenuBox(expanded = genreExpanded, onExpandedChange = { genreExpanded = it }) {
             OutlinedTextField(value = genre, onValueChange = { genre = it }, label = { Text(stringResource(R.string.track_genre_label)) }, modifier = Modifier.fillMaxWidth().menuAnchor(), colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White), trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = genreExpanded) })
@@ -70,9 +73,9 @@ fun UploadScreenImpl(session: SessionManager, onUploadSuccess: () -> Unit) {
                     var coverPart: MultipartBody.Part? = null
                     if (coverUri != null) { val f = uriToFile(coverUri!!, context); coverPart = MultipartBody.Part.createFormData("cover", f.name, f.asRequestBody("image/*".toMediaTypeOrNull())) }
                     try {
-                        ApiClient.service.uploadTrack(title.toRequestBody("text/plain".toMediaTypeOrNull()), artist.toRequestBody("text/plain".toMediaTypeOrNull()), session.getUsername().toRequestBody("text/plain".toMediaTypeOrNull()), session.getPassword().toRequestBody("text/plain".toMediaTypeOrNull()), genre.toRequestBody("text/plain".toMediaTypeOrNull()), audioPart, coverPart)
+                        ApiClient.service.uploadTrack(title.toRequestBody("text/plain".toMediaTypeOrNull()), artist.toRequestBody("text/plain".toMediaTypeOrNull()), session.getUsername().toRequestBody("text/plain".toMediaTypeOrNull()), session.getPassword().toRequestBody("text/plain".toMediaTypeOrNull()), genre.toRequestBody("text/plain".toMediaTypeOrNull()), album.toRequestBody("text/plain".toMediaTypeOrNull()), audioPart, coverPart)
                         Toast.makeText(context, context.getString(R.string.upload_success_toast), Toast.LENGTH_SHORT).show()
-                        title = ""; artist = ""; genre = "Autre"; audioUri = null; coverUri = null; onUploadSuccess()
+                        title = ""; artist = ""; album = ""; genre = "Autre"; audioUri = null; coverUri = null; onUploadSuccess()
                     } catch (e: Exception) {}
                     isLoading = false
                 }

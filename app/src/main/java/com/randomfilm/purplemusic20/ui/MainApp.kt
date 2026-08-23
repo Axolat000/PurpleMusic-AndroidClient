@@ -507,7 +507,8 @@ fun MainApp(
                         onAddToPlaylist = { track -> navController.navigate("select_playlist/${track.id}") },
                         onOpenPlaylist = { playlist -> navController.navigate("playlist_detail/${playlist.id}") },
                         onToggleLike = { track -> toggleLike(track) },
-                        onRedoTutorial = { navController.navigate("tutorial") }
+                        onRedoTutorial = { navController.navigate("tutorial") },
+                        onOpenArtist = { name -> navController.navigate("artist/${Uri.encode(name)}") }
                     )
                 }
 
@@ -535,9 +536,48 @@ fun MainApp(
                             onPlayFrom = { tracks, startTrack -> playMusic(tracks, startTrack, false) },
                             onAddToPlaylist = { track -> navController.navigate("select_playlist/${track.id}") },
                             onToggleLike = { track -> toggleLike(track) },
-                            onRefresh = reloadData
+                            onRefresh = reloadData,
+                            onOpenArtist = { name -> navController.navigate("artist/${Uri.encode(name)}") }
                         )
                     }
+                }
+
+                composable(
+                    "artist/{name}",
+                    arguments = listOf(navArgument("name") { type = NavType.StringType })
+                ) { backStack ->
+                    val name = backStack.arguments?.getString("name")?.let { Uri.decode(it) } ?: return@composable
+                    ArtistScreen(
+                        artistName = name,
+                        allTracks = allTracks,
+                        session = session,
+                        likedTrackIds = likedTrackIds,
+                        onBack = { navController.popBackStack() },
+                        onPlayFrom = { tracks, startTrack -> playMusic(tracks, startTrack, false) },
+                        onAddToPlaylist = { track -> navController.navigate("select_playlist/${track.id}") },
+                        onToggleLike = { track -> toggleLike(track) },
+                        onOpenArtist = { n -> navController.navigate("artist/${Uri.encode(n)}") },
+                        onRefresh = reloadData
+                    )
+                }
+
+                composable(
+                    "album/{name}",
+                    arguments = listOf(navArgument("name") { type = NavType.StringType })
+                ) { backStack ->
+                    val name = backStack.arguments?.getString("name")?.let { Uri.decode(it) } ?: return@composable
+                    AlbumScreen(
+                        albumName = name,
+                        allTracks = allTracks,
+                        session = session,
+                        likedTrackIds = likedTrackIds,
+                        onBack = { navController.popBackStack() },
+                        onPlayFrom = { tracks, startTrack -> playMusic(tracks, startTrack, false) },
+                        onAddToPlaylist = { track -> navController.navigate("select_playlist/${track.id}") },
+                        onToggleLike = { track -> toggleLike(track) },
+                        onOpenArtist = { n -> navController.navigate("artist/${Uri.encode(n)}") },
+                        onRefresh = reloadData
+                    )
                 }
 
                 composable("create") { UploadScreenImpl(session, reloadData) }

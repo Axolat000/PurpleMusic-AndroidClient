@@ -16,6 +16,9 @@
     <string name="search_placeholder">Rechercher...</string>
     <string name="track_title_label">Titre</string>
     <string name="track_artist_label">Artiste</string>
+    <string name="track_album_label">Album (optionnel)</string>
+    <string name="artist_bio_loading">Chargement de la biographie...</string>
+    <string name="artist_bio_unavailable">Aucune biographie disponible.</string>
     <string name="track_genre_label">Genre</string>
     <string name="track_count">%1$d titre(s)</string>
     <string name="label_offline">Hors-ligne</string>

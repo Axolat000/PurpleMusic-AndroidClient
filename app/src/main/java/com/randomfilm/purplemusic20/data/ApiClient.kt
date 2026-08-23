@@ -79,7 +79,8 @@ interface PurpleApi {
     suspend fun uploadTrack(
         @Part("title") t: RequestBody?, @Part("artist") a: RequestBody?,
         @Part("username") u: RequestBody, @Part("password") p: RequestBody,
-        @Part("genre") g: RequestBody?, @Part m: MultipartBody.Part, @Part c: MultipartBody.Part?
+        @Part("genre") g: RequestBody?, @Part("album") al: RequestBody?,
+        @Part m: MultipartBody.Part, @Part c: MultipartBody.Part?
     ): SimpleResponse
 
     @Multipart @POST("api.php?action=edit_track")
@@ -87,7 +88,7 @@ interface PurpleApi {
         @Part("track_id") tid: RequestBody,
         @Part("username") u: RequestBody, @Part("password") p: RequestBody,
         @Part("title") t: RequestBody, @Part("artist") a: RequestBody, @Part("new_genre") g: RequestBody?,
-        @Part c: MultipartBody.Part?
+        @Part("album") al: RequestBody?, @Part c: MultipartBody.Part?
     ): SimpleResponse
 
     @FormUrlEncoded @POST("api.php?action=delete_track")

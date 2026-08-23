@@ -37,7 +37,7 @@ import com.randomfilm.purplemusic20.util.playlistCoverUrl
 
 // ─── Home Screen ──────────────────────────────────────────────────────────────
 @Composable
-fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, recommendedTracks: List<Track>, fullRecommendedTracks: List<Track>, likedTrackIds: Set<Int>, session: SessionManager, currentVolume: Float, currentSortMode: String, currentThemePreset: String, currentMaterialYouEnabled: Boolean, onVolumeChange: (Float) -> Unit, onSortChange: (String) -> Unit, onThemeChange: (String) -> Unit, onMaterialYouChange: (Boolean) -> Unit, onPlay: (Track, List<Track>, Boolean) -> Unit, onListUpdated: (List<Track>) -> Unit, onRefresh: () -> Unit, onLogout: () -> Unit, onAddToPlaylist: (Track) -> Unit, onOpenPlaylist: (Playlist) -> Unit, onToggleLike: (Track) -> Unit, onRedoTutorial: () -> Unit) {
+fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, recommendedTracks: List<Track>, fullRecommendedTracks: List<Track>, likedTrackIds: Set<Int>, session: SessionManager, currentVolume: Float, currentSortMode: String, currentThemePreset: String, currentMaterialYouEnabled: Boolean, onVolumeChange: (Float) -> Unit, onSortChange: (String) -> Unit, onThemeChange: (String) -> Unit, onMaterialYouChange: (Boolean) -> Unit, onPlay: (Track, List<Track>, Boolean) -> Unit, onListUpdated: (List<Track>) -> Unit, onRefresh: () -> Unit, onLogout: () -> Unit, onAddToPlaylist: (Track) -> Unit, onOpenPlaylist: (Playlist) -> Unit, onToggleLike: (Track) -> Unit, onRedoTutorial: () -> Unit, onOpenArtist: (String) -> Unit = {}) {
     var search by remember { mutableStateOf("") }
     var hiddenGenres by remember { mutableStateOf(session.getHiddenGenres()) }
     var showSettings by remember { mutableStateOf(false) }
@@ -206,7 +206,8 @@ fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, recommendedTr
                     onClick = { onPlay(track, baseList, true) },
                     onEdit = { editTrack = track },
                     onAddToPlaylist = { onAddToPlaylist(track) },
-                    onToggleLike = { onToggleLike(track) }
+                    onToggleLike = { onToggleLike(track) },
+                    onArtistClick = onOpenArtist
                 )
             }
         }

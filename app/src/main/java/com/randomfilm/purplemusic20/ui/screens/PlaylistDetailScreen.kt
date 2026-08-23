@@ -42,7 +42,8 @@ fun PlaylistDetailScreen(
     onPlayFrom: (List<Track>, Track) -> Unit,
     onAddToPlaylist: (Track) -> Unit,
     onToggleLike: (Track) -> Unit,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onOpenArtist: (String) -> Unit = {}
 ) {
     var showManage by remember { mutableStateOf(false) }
     var editTrack by remember { mutableStateOf<Track?>(null) }
@@ -115,7 +116,8 @@ fun PlaylistDetailScreen(
                         onClick = { onPlayFrom(pTracks, track) },
                         onEdit = { editTrack = track },
                         onAddToPlaylist = { onAddToPlaylist(track) },
-                        onToggleLike = { onToggleLike(track) }
+                        onToggleLike = { onToggleLike(track) },
+                        onArtistClick = onOpenArtist
                     )
                 }
             }
