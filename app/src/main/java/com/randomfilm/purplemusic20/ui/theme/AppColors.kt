@@ -95,6 +95,21 @@ enum class ThemePreset(val key: String, val label: String, val colors: AppColors
             textSecondary = Color(0xFFB09090),
             navBg = Color(0xFF1E1010),
         )
+    ),
+    // Seul preset clair de l'app -- accent assombri par rapport au violet par défaut (AccentPurple est
+    // pensé pour un fond sombre ; sur fond quasi blanc il perdrait tout contraste utilisé en couleur de
+    // texte/icône, même raison que côté web, voir js/theme.js).
+    LIGHT(
+        key = "light",
+        label = "Clair",
+        colors = AppColors(
+            background = Color(0xFFF5F3F8),
+            panel = Color(0xFFFFFFFF),
+            primary = Color(0xFF8E44AD),
+            accent = Color(0xFF6C2E8C),
+            textSecondary = Color(0xFF6B6076),
+            navBg = Color(0xFFFFFFFF),
+        )
     );
 
     companion object {

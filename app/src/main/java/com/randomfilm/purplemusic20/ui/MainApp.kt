@@ -47,8 +47,10 @@ import java.io.File
 fun MainApp(
     currentThemePreset: String,
     currentMaterialYouEnabled: Boolean,
+    currentCustomThemeBaseColor: Int,
     onThemeChange: (String) -> Unit,
-    onMaterialYouChange: (Boolean) -> Unit
+    onMaterialYouChange: (Boolean) -> Unit,
+    onCustomThemeBaseColorChange: (Int) -> Unit
 ) {
     val navController = rememberNavController()
     val context = LocalContext.current
@@ -457,8 +459,10 @@ fun MainApp(
                         currentSortMode = appSortMode,
                         currentThemePreset = currentThemePreset,
                         currentMaterialYouEnabled = currentMaterialYouEnabled,
+                        currentCustomThemeBaseColor = currentCustomThemeBaseColor,
                         onThemeChange = onThemeChange,
                         onMaterialYouChange = onMaterialYouChange,
+                        onCustomThemeBaseColorChange = onCustomThemeBaseColorChange,
                         onVolumeChange = { vol ->
                             appVolume = vol; mediaController?.volume = vol; session.saveVolume(vol)
                         },

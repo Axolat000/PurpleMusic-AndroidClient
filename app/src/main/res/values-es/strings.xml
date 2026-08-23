@@ -152,6 +152,10 @@
     <string name="theme_preset_midnight">Medianoche</string>
     <string name="theme_preset_forest">Bosque</string>
     <string name="theme_preset_crimson">Carmesí</string>
+    <string name="theme_preset_light">Claro</string>
+    <string name="theme_preset_custom">Personalizado</string>
+    <string name="theme_custom_hex_label">Color base (hex)</string>
+    <string name="theme_custom_hex_hint">El resto del tema (paneles, texto, acento...) se genera automáticamente a partir de este color.</string>
 
     <!-- Tutorial -->
     <string name="tutorial_welcome_greeting">Bienvenido a</string>

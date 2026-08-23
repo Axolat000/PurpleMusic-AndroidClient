@@ -58,6 +58,12 @@ class SessionManager(context: Context) {
     fun getThemePreset(): String = prefs.getString("theme_preset", "violet") ?: "violet"
     fun saveThemePreset(preset: String) = prefs.edit().putString("theme_preset", preset).apply()
 
+    // Couleur de base du thème "Personnalisé" (theme_preset == "custom") -- le reste du thème (panel/
+    // primary/accent/texte/navBg) est dérivé de cette seule couleur via ThemeUtils.generateAppColors().
+    // Défaut = PrimaryPurple (#8E44AD), même violet que le preset par défaut.
+    fun getCustomThemeBaseColor(): Int = prefs.getInt("custom_theme_base_color", 0xFF8E44AD.toInt())
+    fun saveCustomThemeBaseColor(argb: Int) = prefs.edit().putInt("custom_theme_base_color", argb).apply()
+
     // Material You (Android 12+ wallpaper-based dynamic color) opt-in for the app-wide theme.
     fun isMaterialYouEnabled(): Boolean = prefs.getBoolean("material_you_enabled", false)
     fun setMaterialYouEnabled(enabled: Boolean) = prefs.edit().putBoolean("material_you_enabled", enabled).apply()

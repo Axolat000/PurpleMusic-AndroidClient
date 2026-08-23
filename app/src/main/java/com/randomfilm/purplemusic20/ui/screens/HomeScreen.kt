@@ -37,7 +37,7 @@ import com.randomfilm.purplemusic20.util.playlistCoverUrl
 
 // ─── Home Screen ──────────────────────────────────────────────────────────────
 @Composable
-fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, recommendedTracks: List<Track>, fullRecommendedTracks: List<Track>, likedTrackIds: Set<Int>, session: SessionManager, currentVolume: Float, currentSortMode: String, currentThemePreset: String, currentMaterialYouEnabled: Boolean, onVolumeChange: (Float) -> Unit, onSortChange: (String) -> Unit, onThemeChange: (String) -> Unit, onMaterialYouChange: (Boolean) -> Unit, onPlay: (Track, List<Track>, Boolean) -> Unit, onListUpdated: (List<Track>) -> Unit, onRefresh: () -> Unit, onLogout: () -> Unit, onAddToPlaylist: (Track) -> Unit, onOpenPlaylist: (Playlist) -> Unit, onToggleLike: (Track) -> Unit, onRedoTutorial: () -> Unit, onOpenArtist: (String) -> Unit = {}) {
+fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, recommendedTracks: List<Track>, fullRecommendedTracks: List<Track>, likedTrackIds: Set<Int>, session: SessionManager, currentVolume: Float, currentSortMode: String, currentThemePreset: String, currentMaterialYouEnabled: Boolean, currentCustomThemeBaseColor: Int, onVolumeChange: (Float) -> Unit, onSortChange: (String) -> Unit, onThemeChange: (String) -> Unit, onMaterialYouChange: (Boolean) -> Unit, onCustomThemeBaseColorChange: (Int) -> Unit, onPlay: (Track, List<Track>, Boolean) -> Unit, onListUpdated: (List<Track>) -> Unit, onRefresh: () -> Unit, onLogout: () -> Unit, onAddToPlaylist: (Track) -> Unit, onOpenPlaylist: (Playlist) -> Unit, onToggleLike: (Track) -> Unit, onRedoTutorial: () -> Unit, onOpenArtist: (String) -> Unit = {}) {
     var search by remember { mutableStateOf("") }
     var hiddenGenres by remember { mutableStateOf(session.getHiddenGenres()) }
     var showSettings by remember { mutableStateOf(false) }
@@ -83,6 +83,8 @@ fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, recommendedTr
             onVolumeChange = onVolumeChange,
             onThemeChange = onThemeChange,
             onMaterialYouChange = onMaterialYouChange,
+            currentCustomThemeBaseColor = currentCustomThemeBaseColor,
+            onCustomThemeBaseColorChange = onCustomThemeBaseColorChange,
             onSetSleepTimer = { mins ->
                 val intent = Intent(context, MusicService::class.java).apply {
                     action = "SLEEP_TIMER"
