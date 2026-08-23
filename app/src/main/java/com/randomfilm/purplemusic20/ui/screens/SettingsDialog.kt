@@ -10,7 +10,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -39,6 +41,7 @@ import com.randomfilm.purplemusic20.R
 import com.randomfilm.purplemusic20.data.*
 import com.randomfilm.purplemusic20.ui.theme.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 // ─── Settings Dialog ──────────────────────────────────────────────────────────
@@ -46,6 +49,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun SettingsDialog(session: SessionManager, currentHidden: Set<String>, currentVolume: Float, currentSortMode: String, currentThemePreset: String, currentMaterialYouEnabled: Boolean, recommendedSortAvailable: Boolean, onSave: (Set<String>, String) -> Unit, onVolumeChange: (Float) -> Unit, onSetSleepTimer: (Int) -> Unit, onRedoTutorial: () -> Unit, onThemeChange: (String) -> Unit, onMaterialYouChange: (Boolean) -> Unit, onDismiss: () -> Unit) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var localHidden by remember { mutableStateOf(currentHidden) }
     var localVolume by remember { mutableFloatStateOf(currentVolume) }
     var localSortMode by remember { mutableStateOf(currentSortMode) }
@@ -97,6 +101,11 @@ fun SettingsDialog(session: SessionManager, currentHidden: Set<String>, currentV
     var eqMinLevel by remember { mutableStateOf<Short>(0) }
     var eqMaxLevel by remember { mutableStateOf<Short>(0) }
     var eqCenterFreqs by remember { mutableStateOf<Map<Short, Int>>(emptyMap()) }
+    // Presets système du device (vendor -- pas de courbes définies par l'app, contrairement au web qui a
+    // son propre graphe Web Audio) : numberOfPresets peut être 0 sur certains appareils, la rangée de
+    // presets ne s'affiche simplement pas dans ce cas. -1 = réglage manuel courant (aucun preset actif).
+    var eqPresetNames by remember { mutableStateOf<List<String>>(emptyList()) }
+    var eqPresetIndex by remember { mutableIntStateOf(prefs.getInt("eq_preset_index", -1)) }
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
@@ -112,6 +121,7 @@ fun SettingsDialog(session: SessionManager, currentHidden: Set<String>, currentV
                     freqs[i] = tempEq.getCenterFreq(i)
                     initialLevels[i] = prefs.getInt("eq_band_$i", tempEq.getBandLevel(i).toInt()).toShort()
                 }
+                val presetNames = (0 until tempEq.numberOfPresets).map { tempEq.getPresetName(it.toShort()) }
                 tempEq.release()
                 withContext(Dispatchers.Main) {
                     eqBands = bandsList
@@ -119,9 +129,35 @@ fun SettingsDialog(session: SessionManager, currentHidden: Set<String>, currentV
                     eqMaxLevel = maxL
                     eqCenterFreqs = freqs
                     eqLevels = initialLevels
+                    eqPresetNames = presetNames
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+        }
+    }
+
+    // Applique un preset système : le stocke (MusicService.onSharedPreferenceChanged réagit et appelle
+    // equalizer.usePreset() sur la session de lecture réelle), active l'égaliseur, puis relit les niveaux
+    // par bande qui en résultent via un Equalizer temporaire (le seul moyen de connaître les gains exacts
+    // qu'un preset vendor applique, ils ne sont pas exposés autrement) pour que les sliders reflètent le
+    // preset choisi.
+    fun applyEqPreset(index: Short) {
+        eqPresetIndex = index.toInt()
+        eqEnabled = true
+        prefs.edit().putInt("eq_preset_index", index.toInt()).putBoolean("eq_enabled", true).apply()
+        scope.launch {
+            withContext(Dispatchers.IO) {
+                try {
+                    val audioSessionId = prefs.getInt("audio_session_id", 0)
+                    val tempEq = android.media.audiofx.Equalizer(0, audioSessionId)
+                    tempEq.usePreset(index)
+                    val resultLevels = eqBands.associateWith { tempEq.getBandLevel(it) }
+                    tempEq.release()
+                    withContext(Dispatchers.Main) { eqLevels = resultLevels }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
     }
@@ -264,6 +300,27 @@ fun SettingsDialog(session: SessionManager, currentHidden: Set<String>, currentV
                                 }
                                 Spacer(Modifier.height(15.dp))
                             }
+                            // Presets système du device (vendor -- pas de courbes définies par l'app, voir
+                            // le commentaire sur eqPresetNames plus haut). N'apparaît pas du tout si
+                            // l'appareil n'en expose aucun (numberOfPresets == 0, arrive sur certains devices).
+                            if (eqPresetNames.isNotEmpty()) {
+                                item {
+                                    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        eqPresetNames.forEachIndexed { i, name ->
+                                            val selected = eqPresetIndex == i
+                                            AssistChip(
+                                                onClick = { applyEqPreset(i.toShort()) },
+                                                label = { Text(name) },
+                                                colors = AssistChipDefaults.assistChipColors(
+                                                    containerColor = if (selected) LocalAppColors.current.primary else LocalAppColors.current.background,
+                                                    labelColor = if (selected) Color.White else LocalAppColors.current.textSecondary
+                                                )
+                                            )
+                                        }
+                                    }
+                                    Spacer(Modifier.height(15.dp))
+                                }
+                            }
                             if (eqBands.isNotEmpty()) {
                                 items(eqBands) { band ->
                                     val freqHz = eqCenterFreqs[band] ?: 0
@@ -279,7 +336,8 @@ fun SettingsDialog(session: SessionManager, currentHidden: Set<String>, currentV
                                             onValueChange = { newVal ->
                                                 val newLevel = newVal.toInt().toShort()
                                                 eqLevels = eqLevels.toMutableMap().apply { put(band, newLevel) }
-                                                prefs.edit().putInt("eq_band_$band", newLevel.toInt()).apply()
+                                                eqPresetIndex = -1
+                                                prefs.edit().putInt("eq_band_$band", newLevel.toInt()).putInt("eq_preset_index", -1).apply()
                                             },
                                             valueRange = eqMinLevel.toFloat()..eqMaxLevel.toFloat(),
                                             colors = SliderDefaults.colors(thumbColor = Color.White, activeTrackColor = LocalAppColors.current.accent, inactiveTrackColor = Color.White.copy(0.2f)),

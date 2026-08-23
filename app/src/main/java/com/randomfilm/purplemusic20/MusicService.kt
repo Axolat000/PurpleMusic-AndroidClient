@@ -140,10 +140,18 @@ class MusicService : MediaSessionService(), SharedPreferences.OnSharedPreference
                 equalizer = newEq
                 val prefs = getSharedPreferences("purple_music_state", Context.MODE_PRIVATE)
                 newEq.enabled = prefs.getBoolean("eq_enabled", false)
-                val numBands = newEq.numberOfBands
-                for (i in 0 until numBands) {
-                    val level = prefs.getInt("eq_band_$i", newEq.getBandLevel(i.toShort()).toInt())
-                    newEq.setBandLevel(i.toShort(), level.toShort())
+                // -1 (par défaut) = réglage manuel par bande ; >= 0 = un preset système du device (voir
+                // SettingsDialog.kt, qui expose newEq.numberOfPresets/getPresetName()). Bouger un slider à
+                // la main remet ce pref à -1 (voir SettingsDialog.kt), symétrique avec usePreset().
+                val presetIndex = prefs.getInt("eq_preset_index", -1)
+                if (presetIndex in 0 until newEq.numberOfPresets) {
+                    newEq.usePreset(presetIndex.toShort())
+                } else {
+                    val numBands = newEq.numberOfBands
+                    for (i in 0 until numBands) {
+                        val level = prefs.getInt("eq_band_$i", newEq.getBandLevel(i.toShort()).toInt())
+                        newEq.setBandLevel(i.toShort(), level.toShort())
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -156,6 +164,12 @@ class MusicService : MediaSessionService(), SharedPreferences.OnSharedPreference
         if (key == "eq_enabled") {
             try {
                 equalizer?.enabled = sharedPreferences.getBoolean(key, false)
+            } catch (e: Exception) { e.printStackTrace() }
+        } else if (key == "eq_preset_index") {
+            try {
+                val eq = equalizer ?: return
+                val presetIndex = sharedPreferences.getInt(key, -1)
+                if (presetIndex in 0 until eq.numberOfPresets) eq.usePreset(presetIndex.toShort())
             } catch (e: Exception) { e.printStackTrace() }
         } else if (key.startsWith("eq_band_")) {
             try {
