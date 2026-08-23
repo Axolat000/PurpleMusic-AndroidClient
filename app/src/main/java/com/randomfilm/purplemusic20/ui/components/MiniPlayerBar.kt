@@ -28,7 +28,7 @@ import com.randomfilm.purplemusic20.util.*
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun MiniPlayer(t: String, a: String, c: String, p: Boolean, prog: Float, pp: () -> Unit, clk: () -> Unit, session: SessionManager) {
+fun MiniPlayer(t: String, a: String, c: String, p: Boolean, prog: Float, pp: () -> Unit, clk: () -> Unit, session: SessionManager, onArtistClick: (String) -> Unit = {}) {
     Card(colors = CardDefaults.cardColors(containerColor = LocalAppColors.current.panel), modifier = Modifier.fillMaxWidth().height(85.dp).clickable { clk() }, shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)) {
         Column {
             Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -36,7 +36,7 @@ fun MiniPlayer(t: String, a: String, c: String, p: Boolean, prog: Float, pp: () 
                 Spacer(Modifier.width(16.dp))
                 Column(Modifier.weight(1f)) {
                     Text(t, color = Color.White, maxLines = 1, fontWeight = FontWeight.Bold, fontSize = 15.sp, modifier = Modifier.basicMarquee())
-                    Text(a, color = LocalAppColors.current.accent, maxLines = 1, fontSize = 12.sp, modifier = Modifier.basicMarquee())
+                    Text(a, color = LocalAppColors.current.accent, maxLines = 1, fontSize = 12.sp, modifier = Modifier.basicMarquee().clickable { ArtistUtils.splitArtistNames(a).firstOrNull()?.let(onArtistClick) })
                 }
                 IconButton(onClick = pp, Modifier.size(45.dp).background(Color.White, CircleShape)) { Icon(if (p) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, null, tint = LocalAppColors.current.background, modifier = Modifier.size(28.dp)) }
             }

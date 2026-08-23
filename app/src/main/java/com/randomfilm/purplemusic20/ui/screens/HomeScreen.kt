@@ -32,6 +32,7 @@ import com.randomfilm.purplemusic20.data.*
 import com.randomfilm.purplemusic20.ui.components.EditTrackDialog
 import com.randomfilm.purplemusic20.ui.components.TrackRowWithMenu
 import com.randomfilm.purplemusic20.ui.theme.*
+import com.randomfilm.purplemusic20.util.ArtistUtils
 import com.randomfilm.purplemusic20.util.buildImageRequest
 import com.randomfilm.purplemusic20.util.playlistCoverUrl
 
@@ -150,7 +151,7 @@ fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, recommendedTr
                                 // doit jamais être resynchronisée par onListUpdated (voir MainApp.kt) --
                                 // sinon revenir sur Accueil après le grand lecteur remplaçait la file en
                                 // cours par la liste triée par défaut (bug signalé).
-                                TrackCoverCard(track, session) { onPlay(track, recentTracks, false) }
+                                TrackCoverCard(track, session, onClick = { onPlay(track, recentTracks, false) }, onArtistClick = onOpenArtist)
                             }
                         }
                         Spacer(Modifier.height(20.dp))
@@ -161,7 +162,7 @@ fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, recommendedTr
                         HomeSectionTitle(stringResource(R.string.sort_popular), onSeeAll = { seeAll("popular") })
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             items(popularTracks, key = { "popular_${it.id}" }) { track ->
-                                TrackCoverCard(track, session) { onPlay(track, popularTracks, false) }
+                                TrackCoverCard(track, session, onClick = { onPlay(track, popularTracks, false) }, onArtistClick = onOpenArtist)
                             }
                         }
                         Spacer(Modifier.height(20.dp))
@@ -181,7 +182,7 @@ fun HomeScreenImpl(tracks: List<Track>, playlists: List<Playlist>, recommendedTr
                             items(recommendedTracks, key = { "reco_${it.id}" }) { track ->
                                 // isGlobal=false : même raison que recentTracks/popularTracks ci-dessus --
                                 // c'est une file curatée, ne doit pas être resynchronisée par onListUpdated.
-                                TrackCoverCard(track, session) { onPlay(track, recommendedTracks, false) }
+                                TrackCoverCard(track, session, onClick = { onPlay(track, recommendedTracks, false) }, onArtistClick = onOpenArtist)
                             }
                         }
                         Spacer(Modifier.height(20.dp))
@@ -233,7 +234,7 @@ private fun HomeSectionTitle(text: String, onSeeAll: (() -> Unit)? = null) {
 }
 
 @Composable
-private fun TrackCoverCard(track: Track, session: SessionManager, onClick: () -> Unit) {
+private fun TrackCoverCard(track: Track, session: SessionManager, onClick: () -> Unit, onArtistClick: (String) -> Unit = {}) {
     Column(Modifier.width(110.dp).clickable { onClick() }) {
         AsyncImage(
             model = buildImageRequest(LocalContext.current, track.cover_url, session.isCoverCacheEnabled()),
@@ -243,7 +244,10 @@ private fun TrackCoverCard(track: Track, session: SessionManager, onClick: () ->
         )
         Spacer(Modifier.height(6.dp))
         Text(track.title, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium, maxLines = 1)
-        Text(track.artist, color = LocalAppColors.current.textSecondary, fontSize = 12.sp, maxLines = 1)
+        Text(
+            track.artist, color = LocalAppColors.current.textSecondary, fontSize = 12.sp, maxLines = 1,
+            modifier = Modifier.clickable { ArtistUtils.splitArtistNames(track.artist).firstOrNull()?.let(onArtistClick) }
+        )
     }
 }
 

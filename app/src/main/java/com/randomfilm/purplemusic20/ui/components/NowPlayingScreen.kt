@@ -58,7 +58,8 @@ import kotlinx.coroutines.withContext
 fun FullPlayerScreen(
     t: String, a: String, c: String, playing: Boolean, posState: State<Long>, dur: Long, shuff: Boolean, rep: Int, session: SessionManager,
     isLyricsLoading: Boolean, syncedLyrics: List<LyricLine>?, plainLyrics: String?,
-    back: () -> Unit, pp: () -> Unit, nxt: () -> Unit, prv: () -> Unit, seek: (Long) -> Unit, shuffT: () -> Unit, repT: () -> Unit, q: () -> Unit
+    back: () -> Unit, pp: () -> Unit, nxt: () -> Unit, prv: () -> Unit, seek: (Long) -> Unit, shuffT: () -> Unit, repT: () -> Unit, q: () -> Unit,
+    onArtistClick: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
     var showLyrics by remember { mutableStateOf(false) }
@@ -165,7 +166,7 @@ fun FullPlayerScreen(
         Spacer(Modifier.height(30.dp))
         Column(Modifier.fillMaxWidth()) {
             Text(t, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier.basicMarquee())
-            Text(a, color = animatedAccentColor, fontSize = 18.sp, fontWeight = FontWeight.Medium, maxLines = 1, modifier = Modifier.basicMarquee())
+            Text(a, color = animatedAccentColor, fontSize = 18.sp, fontWeight = FontWeight.Medium, maxLines = 1, modifier = Modifier.basicMarquee().clickable { ArtistUtils.splitArtistNames(a).firstOrNull()?.let(onArtistClick) })
         }
         Spacer(Modifier.height(10.dp))
         PlayerSeekBar(posState = posState, dur = dur, accentColor = animatedAccentColor, onSeek = { percent -> seek((percent * dur).toLong()) })

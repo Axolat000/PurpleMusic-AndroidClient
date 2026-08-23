@@ -384,7 +384,8 @@ fun MainApp(
                             progress,
                             { if (isPlaying) mediaController?.pause() else mediaController?.play() },
                             { navController.navigate("full_player") },
-                            session
+                            session,
+                            onArtistClick = { name -> navController.navigate("artist/${Uri.encode(name)}") }
                         )
                     }
 
@@ -622,7 +623,8 @@ fun MainApp(
                                 Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL; Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE; else -> Player.REPEAT_MODE_OFF
                             }
                         },
-                        { navController.navigate("queue") }
+                        { navController.navigate("queue") },
+                        onArtistClick = { name -> navController.navigate("artist/${Uri.encode(name)}") }
                     )
                 }
 
