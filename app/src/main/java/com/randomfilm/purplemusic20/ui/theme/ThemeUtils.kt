@@ -6,11 +6,12 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.ColorUtils
 
 /**
- * Derives a full [AppColors] token set from a single base color picked in Settings ("Personnalisé"
- * preset) -- the base becomes [AppColors.background], everything else (panel/primary/accent/text/navBg)
- * is computed via HSL offsets around its hue. Mirrors the equivalent generateThemeFromBaseColor() in the
- * web app's js/theme.js, adapted to this app's smaller 6-token AppColors (no separate border/muted-text
- * distinction there).
+ * Derives a full [AppColors] token set from a single base color -- the base becomes [AppColors.background],
+ * everything else (panel/primary/accent/text/navBg) is computed via HSL offsets around its hue. Used by the
+ * app-wide dynamic theme (Settings > Appearance, see MainApp.kt), which feeds it a color extracted from the
+ * current track's cover art. Mirrors the equivalent generateThemeFromBaseColor() in the web app's
+ * js/theme.js, adapted to this app's smaller 6-token AppColors (no separate border/muted-text distinction
+ * there).
  */
 object ThemeUtils {
     fun isLight(color: Color): Boolean = color.luminance() > 0.5f

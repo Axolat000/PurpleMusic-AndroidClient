@@ -155,9 +155,8 @@
     <string name="theme_preset_forest">Forêt</string>
     <string name="theme_preset_crimson">Cramoisi</string>
     <string name="theme_preset_light">Clair</string>
-    <string name="theme_preset_custom">Personnalisé</string>
-    <string name="theme_custom_hex_label">Couleur de base (hex)</string>
-    <string name="theme_custom_hex_hint">Le reste du thème (panneaux, texte, accent...) est généré automatiquement à partir de cette couleur.</string>
+    <string name="settings_app_dynamic_theme_label">Thème dynamique d\'application</string>
+    <string name="settings_app_dynamic_theme_hint">Recolore toute l\'application à partir de la pochette de la piste en cours.</string>
 
     <!-- Tutorial -->
     <string name="tutorial_welcome_greeting">Bienvenue sur</string>

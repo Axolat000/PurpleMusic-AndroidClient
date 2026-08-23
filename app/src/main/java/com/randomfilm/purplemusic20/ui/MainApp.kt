@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.media3.common.MediaItem
@@ -27,6 +28,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.palette.graphics.Palette
+import coil.imageLoader
+import coil.request.ImageRequest
 import com.google.common.util.concurrent.MoreExecutors
 import com.randomfilm.purplemusic20.MusicService
 import com.randomfilm.purplemusic20.R
@@ -35,7 +39,9 @@ import com.randomfilm.purplemusic20.ui.components.BottomNavBar
 import com.randomfilm.purplemusic20.ui.components.FullPlayerScreen
 import com.randomfilm.purplemusic20.ui.components.MiniPlayer
 import com.randomfilm.purplemusic20.ui.screens.*
+import com.randomfilm.purplemusic20.ui.theme.AppColors
 import com.randomfilm.purplemusic20.ui.theme.LocalAppColors
+import com.randomfilm.purplemusic20.ui.theme.ThemeUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -47,10 +53,8 @@ import java.io.File
 fun MainApp(
     currentThemePreset: String,
     currentMaterialYouEnabled: Boolean,
-    currentCustomThemeBaseColor: Int,
     onThemeChange: (String) -> Unit,
-    onMaterialYouChange: (Boolean) -> Unit,
-    onCustomThemeBaseColorChange: (Int) -> Unit
+    onMaterialYouChange: (Boolean) -> Unit
 ) {
     val navController = rememberNavController()
     val context = LocalContext.current
@@ -72,6 +76,41 @@ fun MainApp(
     var currentTrackTitle by remember { mutableStateOf(readyToListenText) }
     var currentTrackArtist by remember { mutableStateOf(stoppedText) }
     var currentCoverUrl by remember { mutableStateOf("") }
+
+    // Thème dynamique D'APPLICATION : recolore toute l'appli (fond/panneaux/texte/accent/navBg) à partir de
+    // la pochette de la piste en cours -- réglage indépendant du "Thème dynamique" existant (qui ne teinte
+    // que l'accent du grand lecteur, voir NowPlayingScreen.kt). Extraction Palette identique (même swatch
+    // "dark muted / dark vibrant / dominant" pour rester cohérent visuellement entre les deux réglages),
+    // mais faite ici plutôt que dans un écran particulier car c'est l'appli entière qui doit être recolorée,
+    // et c'est ici que vit déjà l'état "piste en cours".
+    var appDynamicThemeEnabled by remember { mutableStateOf(session.isAppDynamicThemeEnabled()) }
+    var dynamicAppColors by remember { mutableStateOf<AppColors?>(null) }
+    LaunchedEffect(currentCoverUrl, appDynamicThemeEnabled) {
+        if (!appDynamicThemeEnabled || currentCoverUrl.isEmpty()) {
+            dynamicAppColors = null
+            return@LaunchedEffect
+        }
+        withContext(Dispatchers.IO) {
+            try {
+                val request = ImageRequest.Builder(context)
+                    .data(currentCoverUrl)
+                    .size(128)
+                    .allowHardware(false)
+                    .build()
+                val result = context.imageLoader.execute(request)
+                (result.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap?.let { bmp ->
+                    val palette = Palette.from(bmp).generate()
+                    val base = palette.getDarkMutedColor(palette.getDarkVibrantColor(palette.getDominantColor(0xFF2E2445.toInt())))
+                    withContext(Dispatchers.Main) {
+                        dynamicAppColors = ThemeUtils.generateAppColors(Color(base))
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     // Exposé comme State<Long> stable à FullPlayerScreen pour que le tick de position (500ms)
     // ne recompose que le sous-arbre qui affiche réellement la position, pas tout l'écran.
     val currentPositionState = remember { mutableLongStateOf(0L) }
@@ -362,6 +401,10 @@ fun MainApp(
         "queue"
     ) && session.getUserId() != -1
 
+    // Surcharge LocalAppColors pour tout le sous-arbre ci-dessous (Scaffold + NavHost, donc tous les
+    // écrans) quand le thème dynamique d'application est actif et qu'une extraction a réussi -- retombe
+    // sur le thème résolu par MainActivity (preset/Material You) sinon.
+    CompositionLocalProvider(LocalAppColors provides (dynamicAppColors ?: LocalAppColors.current)) {
     Scaffold(
         containerColor = LocalAppColors.current.background,
         bottomBar = {
@@ -460,10 +503,13 @@ fun MainApp(
                         currentSortMode = appSortMode,
                         currentThemePreset = currentThemePreset,
                         currentMaterialYouEnabled = currentMaterialYouEnabled,
-                        currentCustomThemeBaseColor = currentCustomThemeBaseColor,
+                        currentAppDynamicThemeEnabled = appDynamicThemeEnabled,
                         onThemeChange = onThemeChange,
                         onMaterialYouChange = onMaterialYouChange,
-                        onCustomThemeBaseColorChange = onCustomThemeBaseColorChange,
+                        onAppDynamicThemeChange = { enabled ->
+                            appDynamicThemeEnabled = enabled
+                            session.setAppDynamicThemeEnabled(enabled)
+                        },
                         onVolumeChange = { vol ->
                             appVolume = vol; mediaController?.volume = vol; session.saveVolume(vol)
                         },
@@ -675,4 +721,5 @@ fun MainApp(
                 }
             }
         }
+    }
     }

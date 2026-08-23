@@ -47,7 +47,7 @@ import kotlinx.coroutines.withContext
 // ─── Settings Dialog ──────────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsDialog(session: SessionManager, currentHidden: Set<String>, currentVolume: Float, currentSortMode: String, currentThemePreset: String, currentMaterialYouEnabled: Boolean, recommendedSortAvailable: Boolean, onSave: (Set<String>, String) -> Unit, onVolumeChange: (Float) -> Unit, onSetSleepTimer: (Int) -> Unit, onRedoTutorial: () -> Unit, onThemeChange: (String) -> Unit, onMaterialYouChange: (Boolean) -> Unit, onDismiss: () -> Unit, currentCustomThemeBaseColor: Int = session.getCustomThemeBaseColor(), onCustomThemeBaseColorChange: (Int) -> Unit = { session.saveCustomThemeBaseColor(it) }) {
+fun SettingsDialog(session: SessionManager, currentHidden: Set<String>, currentVolume: Float, currentSortMode: String, currentThemePreset: String, currentMaterialYouEnabled: Boolean, recommendedSortAvailable: Boolean, onSave: (Set<String>, String) -> Unit, onVolumeChange: (Float) -> Unit, onSetSleepTimer: (Int) -> Unit, onRedoTutorial: () -> Unit, onThemeChange: (String) -> Unit, onMaterialYouChange: (Boolean) -> Unit, onDismiss: () -> Unit, currentAppDynamicThemeEnabled: Boolean = session.isAppDynamicThemeEnabled(), onAppDynamicThemeChange: (Boolean) -> Unit = { session.setAppDynamicThemeEnabled(it) }) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var localHidden by remember { mutableStateOf(currentHidden) }
@@ -403,59 +403,27 @@ fun SettingsDialog(session: SessionManager, currentHidden: Set<String>, currentV
                                         }
                                     }
 
-                                    // "Personnalisé" : pas une couleur figée comme les presets ci-dessus --
-                                    // dérivé algorithmiquement d'une seule couleur de base (voir ThemeUtils,
-                                    // même principe que le générateur de thème du site web). Le cercle
-                                    // affiche la couleur de base elle-même, pas un aperçu du thème dérivé
-                                    // en entier (pas la place pour ça dans un swatch de 44dp).
-                                    run {
-                                        val customSelected = !localMaterialYou && localThemePreset == "custom"
-                                        val baseColor = Color(currentCustomThemeBaseColor)
-                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(44.dp)
-                                                    .clip(CircleShape)
-                                                    .background(baseColor)
-                                                    .border(
-                                                        width = if (customSelected) 3.dp else 1.dp,
-                                                        color = if (customSelected) ThemeUtils.deriveAccent(baseColor) else Color.White.copy(alpha = 0.2f),
-                                                        shape = CircleShape
-                                                    )
-                                                    .clickable {
-                                                        localThemePreset = "custom"
-                                                        localMaterialYou = false
-                                                        onThemeChange("custom")
-                                                        onMaterialYouChange(false)
-                                                    }
-                                            )
-                                            Spacer(Modifier.height(6.dp))
-                                            Text(stringResource(R.string.theme_preset_custom), color = if (customSelected) LocalAppColors.current.accent else LocalAppColors.current.textSecondary, fontSize = 11.sp)
-                                        }
-                                    }
                                 }
 
-                                if (!localMaterialYou && localThemePreset == "custom") {
-                                    Spacer(Modifier.height(16.dp))
-                                    var customHex by remember { mutableStateOf(String.format("#%06X", 0xFFFFFF and currentCustomThemeBaseColor)) }
-                                    OutlinedTextField(
-                                        value = customHex,
-                                        onValueChange = { input ->
-                                            customHex = input
-                                            val normalized = if (input.startsWith("#")) input else "#$input"
-                                            if (Regex("^#[0-9A-Fa-f]{6}$").matches(normalized)) {
-                                                val argb = (0xFF shl 24) or (android.graphics.Color.parseColor(normalized) and 0xFFFFFF)
-                                                onCustomThemeBaseColorChange(argb)
-                                                onThemeChange("custom")
-                                            }
-                                        },
-                                        label = { Text(stringResource(R.string.theme_custom_hex_label)) },
-                                        singleLine = true,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                                Spacer(Modifier.height(20.dp))
+                                HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+                                Spacer(Modifier.height(20.dp))
+
+                                // Thème dynamique D'APPLICATION : recolore toute l'appli à partir de la
+                                // pochette de la piste en cours (voir MainApp.kt, qui possède l'état "piste
+                                // en cours" et fait l'extraction) -- distinct du "Thème dynamique" de
+                                // l'onglet Général, qui ne teinte que l'accent du grand lecteur.
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text(stringResource(R.string.settings_app_dynamic_theme_label), color = Color.White, fontSize = 14.sp)
+                                        Text(stringResource(R.string.settings_app_dynamic_theme_hint), color = LocalAppColors.current.textSecondary, fontSize = 11.sp)
+                                    }
+                                    var localAppDynamicTheme by remember { mutableStateOf(currentAppDynamicThemeEnabled) }
+                                    Switch(
+                                        checked = localAppDynamicTheme,
+                                        onCheckedChange = { enabled -> localAppDynamicTheme = enabled; onAppDynamicThemeChange(enabled) },
+                                        colors = SwitchDefaults.colors(checkedThumbColor = LocalAppColors.current.accent, checkedTrackColor = LocalAppColors.current.primary)
                                     )
-                                    Spacer(Modifier.height(4.dp))
-                                    Text(stringResource(R.string.theme_custom_hex_hint), color = LocalAppColors.current.textSecondary, fontSize = 11.sp)
                                 }
 
                                 Spacer(Modifier.height(20.dp))

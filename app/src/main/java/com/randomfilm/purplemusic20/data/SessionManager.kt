@@ -58,11 +58,12 @@ class SessionManager(context: Context) {
     fun getThemePreset(): String = prefs.getString("theme_preset", "violet") ?: "violet"
     fun saveThemePreset(preset: String) = prefs.edit().putString("theme_preset", preset).apply()
 
-    // Couleur de base du thème "Personnalisé" (theme_preset == "custom") -- le reste du thème (panel/
-    // primary/accent/texte/navBg) est dérivé de cette seule couleur via ThemeUtils.generateAppColors().
-    // Défaut = PrimaryPurple (#8E44AD), même violet que le preset par défaut.
-    fun getCustomThemeBaseColor(): Int = prefs.getInt("custom_theme_base_color", 0xFF8E44AD.toInt())
-    fun saveCustomThemeBaseColor(argb: Int) = prefs.edit().putInt("custom_theme_base_color", argb).apply()
+    // Thème dynamique D'APPLICATION (distinct de isDynamicThemeEnabled ci-dessus, qui ne touche que
+    // l'accent du grand lecteur) : recolore l'appli entière (fond/panneaux/texte/accent/navBg) à partir de
+    // la pochette de la piste en cours, via ThemeUtils.generateAppColors() -- voir MainApp.kt, qui possède
+    // déjà l'état "piste en cours" nécessaire à l'extraction.
+    fun isAppDynamicThemeEnabled(): Boolean = prefs.getBoolean("app_dynamic_theme", false)
+    fun setAppDynamicThemeEnabled(enabled: Boolean) = prefs.edit().putBoolean("app_dynamic_theme", enabled).apply()
 
     // Material You (Android 12+ wallpaper-based dynamic color) opt-in for the app-wide theme.
     fun isMaterialYouEnabled(): Boolean = prefs.getBoolean("material_you_enabled", false)

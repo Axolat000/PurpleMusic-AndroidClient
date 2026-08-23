@@ -12,14 +12,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.randomfilm.purplemusic20.data.SessionManager
 import com.randomfilm.purplemusic20.ui.MainApp
 import com.randomfilm.purplemusic20.ui.theme.LocalAppColors
 import com.randomfilm.purplemusic20.ui.theme.PurpleMusic20Theme
 import com.randomfilm.purplemusic20.ui.theme.ThemePreset
-import com.randomfilm.purplemusic20.ui.theme.ThemeUtils
 import com.randomfilm.purplemusic20.ui.theme.materialYouAppColors
 
 class MainActivity : AppCompatActivity() {
@@ -30,25 +28,24 @@ class MainActivity : AppCompatActivity() {
             val session = remember { SessionManager(context) }
             var themePreset by remember { mutableStateOf(session.getThemePreset()) }
             var materialYouEnabled by remember { mutableStateOf(session.isMaterialYouEnabled()) }
-            var customThemeBaseColor by remember { mutableStateOf(session.getCustomThemeBaseColor()) }
 
-            val resolvedColors = remember(themePreset, materialYouEnabled, customThemeBaseColor) {
+            val resolvedColors = remember(themePreset, materialYouEnabled) {
                 if (materialYouEnabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     materialYouAppColors(context)
-                } else if (themePreset == "custom") {
-                    ThemeUtils.generateAppColors(Color(customThemeBaseColor))
                 } else {
                     ThemePreset.fromKey(themePreset).colors
                 }
             }
 
+            // Le thème dynamique d'application (surcouche par pochette, voir MainApp.kt) surcharge à son
+            // tour resolvedColors pour le sous-arbre de MainApp uniquement -- géré entièrement là-bas car
+            // c'est là que vit déjà l'état "piste en cours"/pochette, pas ici.
             PurpleMusic20Theme {
                 CompositionLocalProvider(LocalAppColors provides resolvedColors) {
                     Surface(color = resolvedColors.background, modifier = Modifier.fillMaxSize()) {
                         MainApp(
                             currentThemePreset = themePreset,
                             currentMaterialYouEnabled = materialYouEnabled,
-                            currentCustomThemeBaseColor = customThemeBaseColor,
                             onThemeChange = { preset ->
                                 themePreset = preset
                                 session.saveThemePreset(preset)
@@ -56,10 +53,6 @@ class MainActivity : AppCompatActivity() {
                             onMaterialYouChange = { enabled ->
                                 materialYouEnabled = enabled
                                 session.setMaterialYouEnabled(enabled)
-                            },
-                            onCustomThemeBaseColorChange = { argb ->
-                                customThemeBaseColor = argb
-                                session.saveCustomThemeBaseColor(argb)
                             }
                         )
                     }

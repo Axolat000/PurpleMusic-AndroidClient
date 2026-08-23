@@ -153,9 +153,8 @@
     <string name="theme_preset_forest">Wald</string>
     <string name="theme_preset_crimson">Karmesin</string>
     <string name="theme_preset_light">Hell</string>
-    <string name="theme_preset_custom">Benutzerdefiniert</string>
-    <string name="theme_custom_hex_label">Basisfarbe (Hex)</string>
-    <string name="theme_custom_hex_hint">Der Rest des Designs (Panels, Text, Akzent...) wird automatisch aus dieser Farbe generiert.</string>
+    <string name="settings_app_dynamic_theme_label">App-weites dynamisches Design</string>
+    <string name="settings_app_dynamic_theme_hint">Färbt die gesamte App anhand des Covers des aktuellen Titels neu ein.</string>
 
     <!-- Tutorial -->
     <string name="tutorial_welcome_greeting">Willkommen bei</string>
